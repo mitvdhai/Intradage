@@ -42,7 +42,12 @@ export const vestiging = pgTable("vestiging", {
   naam: text("naam").notNull(),
   plaats: text("plaats").notNull(),
   franchisenemerId: text("franchisenemer_id").notNull().references(() => franchisenemer.id),
+  adres: text("adres"),
+  /** Per weekdag ("0" = zondag … "6" = zaterdag): open/sluit als "HH:MM", of null = gesloten */
+  openingstijden: jsonb("openingstijden").$type<Openingstijden>().notNull().default({}),
 }, (t) => [index("vestiging_fn_idx").on(t.franchisenemerId)]);
+
+export type Openingstijden = Record<string, { open: string; sluit: string } | null>;
 
 // ---------- Functiehuis ----------
 
@@ -95,7 +100,23 @@ export const gebruiker = pgTable("gebruiker", {
   personeelsnummer: text("personeelsnummer").notNull().unique(), // sleutel richting HorecaManager
   actief: boolean("actief").notNull().default(true), // false = uit dienst (offboarding)
   overMij: text("over_mij"),
+  // Personeelsbeheer (eigen bron, geen HorecaManager meer)
+  status: text("status").$type<"preboarding" | "actief" | "uit-dienst">().notNull().default("actief"),
+  geboortedatum: date("geboortedatum", { mode: "string" }),
+  email: text("email"),
+  persoonsgegevens: jsonb("persoonsgegevens").$type<Persoonsgegevens>().notNull().default({}),
+  uitDienstPer: date("uit_dienst_per", { mode: "string" }),
+  uitDienstReden: text("uit_dienst_reden"),
+  uitnodigingToken: text("uitnodiging_token").unique(),
+  agendaToken: text("agenda_token").unique(),
 }, (t) => [index("gebruiker_fn_idx").on(t.franchisenemerId)]);
+
+export interface Persoonsgegevens {
+  adres?: string; postcode?: string; woonplaats?: string; iban?: string;
+  noodcontactNaam?: string; noodcontactTelefoon?: string;
+  /** Alleen de laatste 4 cijfers; het volledige BSN gaat versleuteld naar de loonadministratie */
+  bsnLaatste4?: string; loonheffingskorting?: boolean;
+}
 
 export const gebruikerVestiging = pgTable("gebruiker_vestiging", {
   gebruikerId: text("gebruiker_id").notNull().references(() => gebruiker.id, { onDelete: "cascade" }),
@@ -428,3 +449,176 @@ export const actiepunt = pgTable("actiepunt", {
   status: actiepuntStatusEnum("status").notNull().default("open"),
   tijd: ts("tijd").notNull().defaultNow(),
 }, (t) => [index("actiepunt_vestiging_idx").on(t.vestigingId, t.status)]);
+
+
+// ---------- Personeelsbeheer: planning, uren, verlof ----------
+
+/** Posities op de werkvloer (kassa, bakken, uitgifte …). Losstaand van de functie: een medewerker kan op meerdere posities. */
+export const positie = pgTable("positie", {
+  id: text("id").primaryKey(),
+  naam: text("naam").notNull(),
+  kleur: text("kleur").notNull(),
+  volgorde: smallint("volgorde").notNull(),
+  minLeeftijd: smallint("min_leeftijd").notNull().default(0),
+});
+
+export const gebruikerPositie = pgTable("gebruiker_positie", {
+  gebruikerId: text("gebruiker_id").notNull().references(() => gebruiker.id, { onDelete: "cascade" }),
+  positieId: text("positie_id").notNull().references(() => positie.id, { onDelete: "cascade" }),
+}, (t) => [primaryKey({ columns: [t.gebruikerId, t.positieId] })]);
+
+/** Standaardbezetting: per vestiging, weekdag en positie hoeveel mensen van hoe laat tot hoe laat. */
+export const bezettingsnorm = pgTable("bezettingsnorm", {
+  id: text("id").primaryKey(),
+  vestigingId: text("vestiging_id").notNull().references(() => vestiging.id, { onDelete: "cascade" }),
+  weekdag: smallint("weekdag").notNull(),
+  positieId: text("positie_id").notNull().references(() => positie.id),
+  aantal: smallint("aantal").notNull(),
+  van: text("van").notNull(),
+  tot: text("tot").notNull(),
+}, (t) => [index("norm_vestiging_idx").on(t.vestigingId, t.weekdag), check("norm_weekdag", sql`${t.weekdag} between 0 and 6`), check("norm_aantal", sql`${t.aantal} between 1 and 20`)]);
+
+/** Vast beschikbaarheidspatroon: per weekdag één blok (geen rij = niet beschikbaar). */
+export const beschikbaarheid = pgTable("beschikbaarheid", {
+  gebruikerId: text("gebruiker_id").notNull().references(() => gebruiker.id, { onDelete: "cascade" }),
+  weekdag: smallint("weekdag").notNull(),
+  van: text("van").notNull(),
+  tot: text("tot").notNull(),
+}, (t) => [primaryKey({ columns: [t.gebruikerId, t.weekdag] })]);
+
+export const dienstStatusEnum = pgEnum("dienst_status", ["concept", "gepubliceerd"]);
+/** Een dienst. Zonder gebruiker = open dienst. */
+export const dienst = pgTable("dienst", {
+  id: text("id").primaryKey(),
+  vestigingId: text("vestiging_id").notNull().references(() => vestiging.id, { onDelete: "cascade" }),
+  positieId: text("positie_id").notNull().references(() => positie.id),
+  gebruikerId: text("gebruiker_id").references(() => gebruiker.id, { onDelete: "set null" }),
+  start: ts("start").notNull(),
+  eind: ts("eind").notNull(),
+  pauzeMin: smallint("pauze_min").notNull().default(0),
+  status: dienstStatusEnum("status").notNull().default("concept"),
+  bron: text("bron").$type<"handmatig" | "suggestie">().notNull().default("handmatig"),
+}, (t) => [index("dienst_vestiging_idx").on(t.vestigingId, t.start), index("dienst_gebruiker_idx").on(t.gebruikerId, t.start), check("dienst_volgorde", sql`${t.eind} > ${t.start}`)]);
+
+export const verlofTypeEnum = pgEnum("verlof_type", ["vakantie", "bijzonder", "onbetaald", "ziek"]);
+export const verlofStatusEnum = pgEnum("verlof_status", ["aangevraagd", "goedgekeurd", "afgewezen"]);
+export const verlof = pgTable("verlof", {
+  id: text("id").primaryKey(),
+  gebruikerId: text("gebruiker_id").notNull().references(() => gebruiker.id, { onDelete: "cascade" }),
+  type: verlofTypeEnum("type").notNull(),
+  van: date("van", { mode: "string" }).notNull(),
+  tot: date("tot", { mode: "string" }), // null bij een lopende ziekmelding
+  uren: numeric("uren", { precision: 6, scale: 1, mode: "number" }),
+  status: verlofStatusEnum("status").notNull().default("aangevraagd"),
+  opmerking: text("opmerking"),
+  behandeldDoor: text("behandeld_door").references(() => gebruiker.id),
+  aangevraagd: ts("aangevraagd").notNull().defaultNow(),
+}, (t) => [index("verlof_gebruiker_idx").on(t.gebruikerId, t.van)]);
+
+export const klokStatusEnum = pgEnum("klok_status", ["open", "ingediend", "goedgekeurd"]);
+/** Gewerkte tijd: in- en uitklokken, of handmatig ingediend. Basis voor de loonadministratie. */
+export const klok = pgTable("klok", {
+  id: text("id").primaryKey(),
+  gebruikerId: text("gebruiker_id").notNull().references(() => gebruiker.id, { onDelete: "cascade" }),
+  vestigingId: text("vestiging_id").notNull().references(() => vestiging.id),
+  dienstId: text("dienst_id").references(() => dienst.id, { onDelete: "set null" }),
+  in: ts("in").notNull(),
+  uit: ts("uit"),
+  pauzeMin: smallint("pauze_min").notNull().default(0),
+  status: klokStatusEnum("status").notNull().default("open"),
+  goedgekeurdDoor: text("goedgekeurd_door").references(() => gebruiker.id),
+  opmerking: text("opmerking"),
+}, (t) => [index("klok_gebruiker_idx").on(t.gebruikerId, t.in)]);
+
+// ---------- Personeelsbeheer: contracten, dossier, werving, lifecycle ----------
+
+export const contractTypeEnum = pgEnum("contract_type", ["oproep", "minmax", "vast"]);
+export const contractStatusEnum = pgEnum("contract_status", ["concept", "ter-ondertekening", "getekend", "beeindigd"]);
+export const contract = pgTable("contract", {
+  id: text("id").primaryKey(),
+  gebruikerId: text("gebruiker_id").notNull().references(() => gebruiker.id, { onDelete: "cascade" }),
+  volgnummer: smallint("volgnummer").notNull(),
+  type: contractTypeEnum("type").notNull(),
+  urenMin: numeric("uren_min", { precision: 4, scale: 1, mode: "number" }).notNull(),
+  urenMax: numeric("uren_max", { precision: 4, scale: 1, mode: "number" }).notNull(),
+  uurloon: geld("uurloon").notNull(),
+  functieId: text("functie_id").references(() => functie.id),
+  start: date("start", { mode: "string" }).notNull(),
+  eind: date("eind", { mode: "string" }), // null = onbepaalde tijd
+  proeftijdTot: date("proeftijd_tot", { mode: "string" }),
+  tekst: text("tekst").notNull(),
+  status: contractStatusEnum("status").notNull().default("concept"),
+  documentHash: text("document_hash"),
+  ondertekendWerknemer: ts("ondertekend_werknemer"),
+  handtekeningWerknemer: text("handtekening_werknemer"),
+  ondertekendWerkgever: ts("ondertekend_werkgever"),
+  handtekeningWerkgever: text("handtekening_werkgever"),
+  werkgeverOndertekenaarId: text("werkgever_ondertekenaar_id").references(() => gebruiker.id),
+  aangemaakt: ts("aangemaakt").notNull().defaultNow(),
+  aangemaaktDoor: text("aangemaakt_door").references(() => gebruiker.id),
+}, (t) => [index("contract_gebruiker_idx").on(t.gebruikerId), check("contract_uren", sql`${t.urenMin} >= 0 and ${t.urenMax} >= ${t.urenMin}`)]);
+
+/** Personeelsdossier. In het prototype staat het bestand in de database (max. 2 MB); in productie in EU-objectopslag. */
+export const dossierDocument = pgTable("dossier_document", {
+  id: text("id").primaryKey(),
+  gebruikerId: text("gebruiker_id").notNull().references(() => gebruiker.id, { onDelete: "cascade" }),
+  categorie: text("categorie").$type<DossierCategorie>().notNull(),
+  titel: text("titel").notNull(),
+  bestandsnaam: text("bestandsnaam"),
+  mime: text("mime"),
+  grootte: smallint("grootte_kb"),
+  inhoud: text("inhoud"), // base64
+  vervalt: date("vervalt", { mode: "string" }),
+  geuploadDoor: text("geupload_door").references(() => gebruiker.id),
+  tijd: ts("tijd").notNull().defaultNow(),
+}, (t) => [index("dossier_gebruiker_idx").on(t.gebruikerId)]);
+export type DossierCategorie = "identiteit" | "contract" | "diploma" | "certificaat" | "loonheffing" | "verklaring" | "overig";
+
+export const vacature = pgTable("vacature", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  vestigingId: text("vestiging_id").notNull().references(() => vestiging.id),
+  functieId: text("functie_id").references(() => functie.id),
+  titel: text("titel").notNull(),
+  omschrijving: text("omschrijving").notNull(),
+  uren: text("uren").notNull(),
+  status: text("status").$type<"open" | "gesloten">().notNull().default("open"),
+  gemaakt: ts("gemaakt").notNull().defaultNow(),
+});
+
+export const kandidaatFaseEnum = pgEnum("kandidaat_fase", ["nieuw", "gesprek", "proefdraaien", "aanbod", "aangenomen", "afgewezen"]);
+export interface KandidaatNotitie { door: string; tijd: string; tekst: string }
+export const kandidaat = pgTable("kandidaat", {
+  id: text("id").primaryKey(),
+  vacatureId: text("vacature_id").notNull().references(() => vacature.id),
+  voornaam: text("voornaam").notNull(),
+  achternaam: text("achternaam").notNull(),
+  email: text("email").notNull(),
+  mobiel: text("mobiel").notNull(),
+  geboortedatum: date("geboortedatum", { mode: "string" }),
+  motivatie: text("motivatie"),
+  beschikbaarheid: text("beschikbaarheid"),
+  bron: text("bron").notNull().default("website"),
+  aangedragenDoor: text("aangedragen_door").references(() => gebruiker.id),
+  fase: kandidaatFaseEnum("fase").notNull().default("nieuw"),
+  gesprekOp: ts("gesprek_op"),
+  beoordeling: smallint("beoordeling"),
+  notities: jsonb("notities").$type<KandidaatNotitie[]>().notNull().default([]),
+  gebruikerId: text("gebruiker_id").references(() => gebruiker.id),
+  tijd: ts("tijd").notNull().defaultNow(),
+}, (t) => [index("kandidaat_vacature_idx").on(t.vacatureId, t.fase)]);
+
+export const lifecycleFaseEnum = pgEnum("lifecycle_fase", ["preboarding", "onboarding", "offboarding"]);
+/** Stappen in pre-, on- en offboarding, per medewerker. */
+export const lifecycleTaak = pgTable("lifecycle_taak", {
+  id: text("id").primaryKey(),
+  gebruikerId: text("gebruiker_id").notNull().references(() => gebruiker.id, { onDelete: "cascade" }),
+  fase: lifecycleFaseEnum("fase").notNull(),
+  sleutel: text("sleutel").notNull(),
+  titel: text("titel").notNull(),
+  wie: text("wie").$type<"medewerker" | "leiding">().notNull(),
+  volgorde: smallint("volgorde").notNull(),
+  deadline: date("deadline", { mode: "string" }),
+  klaar: ts("klaar"),
+  klaarDoor: text("klaar_door").references(() => gebruiker.id),
+}, (t) => [unique("lifecycle_uniek").on(t.gebruikerId, t.fase, t.sleutel)]);

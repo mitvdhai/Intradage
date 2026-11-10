@@ -188,6 +188,99 @@ p = await als("u-tim");
 await p.goto(`${BASE}/app/enquetes`, { waitUntil: "networkidle0" });
 ok((await tekst(p)).includes("E2E poll"), "nieuwe poll van HQ zichtbaar bij medewerker");
 
+// ---------- Personeelsbeheer ----------
+const maandag = (() => { const d = new Date(); d.setHours(12); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.toLocaleDateString("sv-SE"); })();
+const volgende = (() => { const d = new Date(`${maandag}T12:00:00`); d.setDate(d.getDate() + 7); return d.toLocaleDateString("sv-SE"); })();
+const teken = async (pg) => {
+  const box = await (await pg.$("svg.touch-none")).boundingBox();
+  await pg.mouse.move(box.x + 30, box.y + 70); await pg.mouse.down();
+  for (const [x, y] of [[60, 30], [90, 75], [130, 25], [170, 70], [220, 40]]) await pg.mouse.move(box.x + x, box.y + y, { steps: 4 });
+  await pg.mouse.up();
+};
+
+// 16. FN maakt een roostervoorstel voor volgende week en publiceert het
+p = await als("u-erik");
+await p.setViewport({ width: 1400, height: 900 });
+await p.goto(`${BASE}/beheer/planning?v=v-centrum&week=${volgende}`, { waitUntil: "networkidle0" });
+await klikTekst(p, "voorstellen");
+await p.waitForFunction(() => /diensten ingevuld/.test(document.body.innerText), { timeout: 15000 });
+ok(/\d+ van de \d+ diensten ingevuld/.test(await tekst(p)), "roostervoorstel vult de standaardbezetting");
+await klikTekst(p, "Publiceren");
+await p.waitForFunction(() => !/Publiceren \(/.test(document.body.innerText), { timeout: 10000 });
+ok(/\b0\s*\n?\s*concept/.test(await tekst(p)), "rooster gepubliceerd (geen concepten meer)");
+
+// 17. Verlof: Sanne vraagt aan, Erik keurt Daans aanvraag goed
+p = await als("u-sanne");
+await p.goto(`${BASE}/app/werk/verlof`, { waitUntil: "networkidle0" });
+await p.type('input[name="opmerking"]:not([placeholder^="Optioneel"])', "E2E vakantie");
+await klikTekst(p, "Aanvragen");
+await p.waitForFunction(() => document.body.innerText.includes("Aangevraagd."), { timeout: 8000 });
+ok((await tekst(p)).includes("Wacht"), "medewerker vraagt verlof aan");
+p = await als("u-erik");
+await p.setViewport({ width: 1400, height: 900 });
+await p.goto(`${BASE}/beheer/verlof`, { waitUntil: "networkidle0" });
+const voor = (await tekst(p)).match(/(\d+)\s*\n\s*aanvragen te beoordelen/)?.[1];
+await klikTekst(p, "Goedkeuren");
+await p.waitForFunction((n) => (document.body.innerText.match(/(\d+)\s*\n\s*aanvragen te beoordelen/)?.[1]) !== n, { timeout: 8000 }, voor);
+ok(true, "leiding keurt verlof goed");
+
+// 18. Contract digitaal tekenen: eerst Sanne, dan Erik als werkgever
+p = await als("u-sanne");
+await p.goto(`${BASE}/app/werk/contract/ct-sanne-2`, { waitUntil: "networkidle0" });
+await p.click('input[name="akkoord"]');
+await teken(p);
+await klikTekst(p, "Contract tekenen");
+await p.waitForFunction(() => document.body.innerText.includes("Getekend"), { timeout: 8000 });
+ok(true, "medewerker tekent contract met handtekening");
+p = await als("u-erik");
+await p.setViewport({ width: 1400, height: 1000 });
+await p.goto(`${BASE}/beheer/personeel/u-sanne/contract/ct-sanne-2`, { waitUntil: "networkidle0" });
+await teken(p);
+await klikTekst(p, "Contract tekenen");
+await p.waitForFunction(() => document.body.innerText.includes("Getekend door beide partijen"), { timeout: 8000 });
+ok(true, "werkgever tekent; contract is rond");
+
+// 19. Solliciteren via de openbare vacaturepagina
+p = await als("");
+await p.goto(`${BASE}/werken-bij/medewerker-centrum-rotterdam`, { waitUntil: "networkidle0" });
+await p.type('input[name="voornaam"]', "Eetje"); await p.type('input[name="achternaam"]', "E2E");
+await p.type('input[name="email"]', "e2e@voorbeeld.nl"); await p.type('input[name="mobiel"]', "0612345678");
+await p.click('input[name="privacy"]');
+await klikTekst(p, "Verstuur sollicitatie");
+await p.waitForFunction(() => document.body.innerText.includes("Bedankt voor je sollicitatie"), { timeout: 8000 });
+p = await als("u-erik");
+await p.setViewport({ width: 1400, height: 900 });
+await p.goto(`${BASE}/beheer/werving`, { waitUntil: "networkidle0" });
+ok((await tekst(p)).includes("Eetje E2E"), "sollicitatie verschijnt in de werving");
+
+// 20. Aannemen → preboarding via startlink
+await p.goto(`${BASE}/beheer/werving/k-3`, { waitUntil: "networkidle0" });
+await klikTekst(p, "Aannemen en preboarding starten");
+await p.waitForFunction(() => location.search.includes("nieuw=1"), { timeout: 10000 });
+const startLink = await p.$eval('a[href^="/start/"]', (a) => a.getAttribute("href"));
+ok(!!startLink && (await tekst(p)).includes("preboarding"), "kandidaat aangenomen, dossier en startlink aangemaakt");
+p = await als("");
+await p.goto(`${BASE}${startLink}`, { waitUntil: "networkidle0" });
+await p.type('input[name="adres"]', "Coolsingel 40"); await p.type('input[name="postcode"]', "3011AD"); await p.type('input[name="woonplaats"]', "Rotterdam");
+await p.type('input[name="iban"]', "NL91ABNA0417164300"); await p.type('input[name="bsn"]', "111222333");
+await klikTekst(p, "Opslaan");
+await p.waitForFunction(() => /1 van 4 stappen klaar/.test(document.body.innerText), { timeout: 8000 });
+ok(true, "nieuwe medewerker vult gegevens in via de startlink (IBAN- en BSN-controle)");
+
+// 21. Uren goedkeuren en exporteren
+p = await als("u-erik");
+await p.setViewport({ width: 1400, height: 900 });
+await p.goto(`${BASE}/beheer/uren?week=${maandag}`, { waitUntil: "networkidle0" });
+if (await klikTekst(p, "Alles goedkeuren")) await p.waitForFunction(() => document.body.innerText.includes("Alles goedgekeurd"), { timeout: 8000 });
+ok((await tekst(p)).includes("Alles goedgekeurd"), "leiding keurt de uren van de week goed");
+const csv = await p.evaluate(async (u) => (await fetch(u)).text(), `${BASE}/beheer/uren/export?van=${maandag}&tot=${volgende}`);
+ok(csv.replace(/^\uFEFF/, "").startsWith("Personeelsnummer;Naam;Datum") && csv.split("\n").length > 5, "export voor de loonadministratie (CSV)");
+
+// 22. Rechten: medewerker kan geen dossier openen
+p = await als("u-sanne");
+const r2 = await p.goto(`${BASE}/beheer/personeel/u-daan`, { waitUntil: "networkidle0" });
+ok(r2.url().endsWith("/app") || r2.status() === 404, "medewerker heeft geen toegang tot personeelsdossiers");
+
 await browser.close();
 console.log(fouten.length ? `\nFOUTEN:\n${fouten.join("\n")}` : "\nAlle flows OK");
 process.exit(fouten.length ? 1 : 0);

@@ -8,7 +8,10 @@ import { evenementenVoor, tijdlijn } from "@/lib/betrokkenheid";
 import { teDoen, vestigingNaam } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
 import { staff } from "@/lib/staff/adapter";
-import { dagenVanaf } from "@/lib/tijd";
+import { dagenVanaf, nuMs } from "@/lib/tijd";
+import { klokVan, medewerker } from "@/lib/personeel/data";
+import { leeftijdOp, standaardPauze } from "@/lib/planning/atw";
+import { KlokInKnop, UitklokForm } from "@/components/werk-acties";
 
 export default async function Home() {
   const { u, org } = await vereisGebruiker();
@@ -17,6 +20,10 @@ export default async function Home() {
   ]);
   const volgende = rooster.find((d) => new Date(d.eind) > new Date());
   const collegas = volgende ? await staff.collegas(volgende, org.gebruikers) : [];
+  const [openKlok] = await klokVan({ gebruikerIds: [u.id], status: "open" });
+  // Inklokken kan vanaf een half uur voor de dienst tot het einde
+  const klokbaar = !!volgende && new Date(volgende.start).getTime() - nuMs() < 30 * 60000;
+  const leeftijd = (await medewerker(u.id))?.geboortedatum ?? null;
   const evenement = evenementen[0];
   const uur = new Date().getHours();
   const groet = uur < 12 ? "Goedemorgen" : uur < 18 ? "Goedemiddag" : "Goedenavond";
@@ -40,14 +47,27 @@ export default async function Home() {
         </Link>
       </header>
 
-      {volgende && (
+      {(volgende || openKlok) && (
         <div className="px-4 pt-4">
-          <Link href="/app/werk" className="block overflow-hidden rounded-2xl bg-navy-700 p-4 text-white shadow-sm">
-            <div className="text-[12px] font-semibold uppercase tracking-wider text-navy-200">Volgende dienst · {new Date(volgende.start).toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "short" })}</div>
-            <div className="mt-1 text-3xl font-bold tracking-tight">{uurLabel(volgende.start)} – {uurLabel(volgende.eind)}</div>
-            <div className="mt-1 text-sm text-navy-100">{vestigingNaam(org, volgende.vestigingId)} · {volgende.taak}{collegas.length ? ` · met ${collegas.join(", ")}` : ""}</div>
-            <div className="mt-3 h-1 w-12 rounded-full bg-brand-500" />
-          </Link>
+          <div className="overflow-hidden rounded-2xl bg-navy-700 p-4 text-white shadow-sm">
+            {openKlok ? (
+              <>
+                <div className="text-[12px] font-semibold uppercase tracking-wider text-navy-200">Ingeklokt · {vestigingNaam(org, openKlok.vestigingId)}</div>
+                <div className="mt-1 text-3xl font-bold tracking-tight">sinds {uurLabel(openKlok.in.toISOString())}</div>
+                <div className="mt-1 mb-3 text-sm text-navy-100">{volgende && klokbaar ? `${volgende.taak} · gepland tot ${uurLabel(volgende.eind)}` : "Fijne dienst!"}</div>
+                <UitklokForm pauze={volgende ? standaardPauze((new Date(volgende.eind).getTime() - new Date(volgende.start).getTime()) / 60000, leeftijdOp(leeftijd, new Date().toLocaleDateString("sv-SE"))) : 0} />
+              </>
+            ) : volgende && (
+              <>
+                <Link href="/app/werk" className="block">
+                  <div className="text-[12px] font-semibold uppercase tracking-wider text-navy-200">{klokbaar ? "Je dienst begint zo" : "Volgende dienst"} · {new Date(volgende.start).toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "short" })}</div>
+                  <div className="mt-1 text-3xl font-bold tracking-tight">{uurLabel(volgende.start)} – {uurLabel(volgende.eind)}</div>
+                  <div className="mt-1 text-sm text-navy-100">{vestigingNaam(org, volgende.vestigingId)} · {volgende.taak}{collegas.length ? ` · met ${collegas.join(", ")}` : ""}</div>
+                </Link>
+                {klokbaar ? <div className="mt-3"><KlokInKnop dienstId={volgende.id} /></div> : <div className="mt-3 h-1 w-12 rounded-full bg-brand-500" />}
+              </>
+            )}
+          </div>
         </div>
       )}
 

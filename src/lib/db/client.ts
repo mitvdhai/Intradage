@@ -60,5 +60,10 @@ async function seedAlsLeeg(db: DB) {
       const { seedBetrokkenheid } = await import("./seed-betrokkenheid");
       await seedBetrokkenheid(tx as unknown as DB);
     }
+    const [{ p }] = (await tx.execute<{ p: number }>(sql`select count(*)::int as p from positie`)).rows;
+    if (p === 0) {
+      const { seedPersoneel } = await import("./seed-personeel");
+      await seedPersoneel(tx as unknown as DB);
+    }
   });
 }

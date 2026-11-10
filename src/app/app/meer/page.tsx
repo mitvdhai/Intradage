@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Award, BookOpen, CalendarDays, ClipboardCheck, ExternalLink, Gift, MessageSquareHeart, Settings, Users } from "lucide-react";
+import { Award, BookOpen, CalendarDays, ClipboardCheck, ExternalLink, Gift, MessageSquareHeart, Settings, UserPlus, Users } from "lucide-react";
 import { Lijst, PageTop, Rij, Sectie } from "@/components/ui";
 import { isHQ, isLeiding, magBeheer } from "@/lib/access";
 import { uitloggen } from "@/lib/acties";
@@ -8,7 +8,7 @@ import { vereisGebruiker } from "@/lib/session";
 
 // Snelkoppelingen naar andere systemen. In productie per doelgroep instelbaar door HQ, met SSO waar mogelijk.
 const SNELKOPPELINGEN = [
-  { titel: "Staff-app", sub: "Beschikbaarheid, verlof en klokken", url: "https://staff.nl" },
+  { titel: "Pensioen (PH&C)", sub: "Je pensioenoverzicht in de horeca", url: "https://www.phenc.nl" },
   { titel: "Allergenenlijst (PDF)", sub: "Actuele versie voor gasten", url: "https://bramladage.nl" },
   { titel: "Vertrouwenspersoon", sub: "Vertrouwelijk je verhaal kwijt", url: "#vertrouwenspersoon" },
 ];
@@ -38,6 +38,13 @@ export default async function Meer() {
           </Link>
         ))}
       </div>
+      {!isHQ(u) && (
+        <Sectie titel="Werken bij">
+          <Lijst>
+            <Rij href={`/werken-bij?ref=${u.personeelsnummer}`} icoon={<UserPlus size={18} />} titel="Ken jij iemand voor ons team?" sub="Deel een vacature met je eigen link · 50 punten als diegene wordt aangenomen" />
+          </Lijst>
+        </Sectie>
+      )}
       <Sectie titel="Snelkoppelingen">
         <Lijst>
           {SNELKOPPELINGEN.map((s) => <Rij key={s.titel} href={s.url} icoon={<ExternalLink size={18} />} titel={s.titel} sub={s.sub} />)}
@@ -46,7 +53,7 @@ export default async function Meer() {
       <Sectie titel="Account">
         <Lijst>
           <Rij href={`/app/smoelenboek/${u.id}`} icoon={<Users size={18} />} titel="Mijn profiel" sub="Wat collega's van je zien" />
-          {magBeheer(u) && <Rij href="/beheer" icoon={<Settings size={18} />} titel="Beheeromgeving" sub="Op de laptop" />}
+          {(magBeheer(u) || isLeiding(u)) && <Rij href={magBeheer(u) ? "/beheer" : "/beheer/planning"} icoon={<Settings size={18} />} titel="Beheeromgeving" sub="Planning, personeel en meer · op de laptop" />}
         </Lijst>
         <form action={uitloggen} className="mt-3"><button className="tap w-full rounded-xl text-[15px] font-semibold text-brand-700 ring-1 ring-line">Uitloggen</button></form>
       </Sectie>

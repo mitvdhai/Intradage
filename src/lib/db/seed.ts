@@ -11,6 +11,8 @@ export async function seed(db: DB) {
   await seedKern(db);
   const { seedBetrokkenheid } = await import("./seed-betrokkenheid");
   await seedBetrokkenheid(db);
+  const { seedPersoneel } = await import("./seed-personeel");
+  await seedPersoneel(db);
 }
 
 async function seedKern(db: DB) {
@@ -68,7 +70,7 @@ async function seedKern(db: DB) {
 
 /** Alle tabellen leegmaken (voor "demodata herstellen" en tests). */
 export async function leegmaken(db: DB) {
-  await db.execute(sql`truncate table actiepunt, checklist_uitvoering, checklist_sjabloon, evenement_aanmelding, evenement,
+  await db.execute(sql`truncate table lifecycle_taak, kandidaat, vacature, dossier_document, contract, klok, verlof, dienst, beschikbaarheid, bezettingsnorm, gebruiker_positie, positie, actiepunt, checklist_uitvoering, checklist_sjabloon, evenement_aanmelding, evenement,
     enquete_antwoord, enquete_deelname, enquete, beloning_aanvraag, beloning, waardering, waarde, "like", audit_log, medewerker_niveau, beoordeling_score, beoordeling, beloningsregeling, ontgrendeling, document,
     leer_voortgang, leer_item, ruilverzoek, chat_bericht, chat_groep, reactie, bericht_status, bericht, handboek_doc, salaris,
     gebruiker_vestiging, gebruiker, functie_profiel, profiel_item, functie, vestiging, franchisenemer, regio restart identity cascade`);

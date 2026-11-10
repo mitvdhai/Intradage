@@ -133,7 +133,9 @@ export async function beslisRuil(ruilId: string, akkoord: boolean) {
   const [r] = await db.select().from(t.ruilverzoek).where(eq(t.ruilverzoek.id, ruilId));
   if (!r || r.status !== "wacht-op-akkoord" || !isLeiding(u) || !magMedewerkerZien(org, u, r.aangebodenDoor)) return;
   await db.update(t.ruilverzoek).set({ status: akkoord ? "goedgekeurd" : "afgewezen" }).where(eq(t.ruilverzoek.id, ruilId));
-  await audit(u.id, akkoord ? "Ruil goedgekeurd" : "Ruil afgewezen", `${r.dienstId}${akkoord && !staff.ondersteuntSchrijven ? " · verwerken in HorecaManager" : ""}`);
+  // De ruil direct in het rooster verwerken
+  if (akkoord && r.overgenomenDoor) await db.update(t.dienst).set({ gebruikerId: r.overgenomenDoor }).where(and(eq(t.dienst.id, r.dienstId), eq(t.dienst.gebruikerId, r.aangebodenDoor)));
+  await audit(u.id, akkoord ? "Ruil goedgekeurd" : "Ruil afgewezen", `${r.dienstId}${akkoord ? " · rooster bijgewerkt" : ""}`);
   revalidatePath("/app", "layout");
 }
 
@@ -199,7 +201,7 @@ export async function meldFoutAntwoord(vraag: string) {
 
 export async function ontgrendel(_: unknown, formData: FormData): Promise<{ fout?: string }> {
   const { u } = await vereisGebruiker();
-  // Demo: code 123456. Productie: eenmalige sms-code naar het nummer uit HorecaManager.
+  // Demo: code 123456. Productie: eenmalige sms-code naar het nummer uit het personeelsdossier.
   if (tekst(formData, "code") !== "123456") return { fout: "Deze code klopt niet. Probeer het opnieuw." };
   const db = await getDb();
   const tot = new Date(Date.now() + 15 * 60 * 1000);
@@ -305,7 +307,7 @@ export async function legBesluitVast(beoordelingId: string, _: unknown, formData
         .onConflictDoUpdate({ target: [t.medewerkerNiveau.gebruikerId, t.medewerkerNiveau.itemId], set: { niveau, bijgewerkt: new Date() } });
     }
   });
-  await audit(u.id, "Salarisbesluit vastgelegd", `${b.gebruikerId}: ${percentage}% → € ${nieuw.toFixed(2)} (advies ${advies.percentage}%) · door te zetten naar HorecaManager`);
+  await audit(u.id, "Salarisbesluit vastgelegd", `${b.gebruikerId}: ${percentage}% → € ${nieuw.toFixed(2)} (advies ${advies.percentage}%) · nieuw contract opstellen en doorzetten naar de loonadministratie`);
   revalidatePath("/app", "layout");
   revalidatePath("/beheer", "layout");
   return {};

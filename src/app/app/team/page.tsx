@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
-import { Camera, ClipboardCheck, Repeat } from "lucide-react";
+import { Camera, ClipboardCheck, Palmtree, Repeat, Users } from "lucide-react";
+import { scopeVestigingen } from "@/lib/access";
+import { beslisVerlof } from "@/lib/personeel/acties";
+import { diensten, posities, verlofVan } from "@/lib/personeel/data";
 import { Label, Leeg, Lijst, PageTop, Rij, Sectie, dagLabel, uurLabel } from "@/components/ui";
 import { isLeiding, teamVan } from "@/lib/access";
 import { beslisRuil, startBeoordeling } from "@/lib/acties";
@@ -23,6 +26,11 @@ export default async function Team() {
   const ids = new Set(team.map((t) => t.id));
   const [inzendingen, ruilen, beo] = await Promise.all([inzendingenVan([...ids]), ruilverzoeken(), beoordelingen({ gebruikerIds: [...ids] })]);
   const ruil = ruilen.filter((r) => r.status === "wacht-op-akkoord" && ids.has(r.aangebodenDoor));
+  const vandaagStart = new Date(); vandaagStart.setHours(0, 0, 0, 0);
+  const [aanvragen, vandaag, pos] = await Promise.all([
+    verlofVan({ gebruikerIds: [...ids], status: "aangevraagd" }),
+    diensten({ vestigingIds: scopeVestigingen(org, u), van: vandaagStart, tot: new Date(vandaagStart.getTime() + 86400000), status: "gepubliceerd" }), posities(),
+  ]);
   const ruilDiensten = await Promise.all(ruil.map(async (r) => {
     const g = org.gebruikers.find((x) => x.id === r.aangebodenDoor)!;
     return { r, d: (await staff.rooster(g, new Date(0), dagenVanaf(30))).find((x) => x.id === r.dienstId) };
@@ -44,7 +52,33 @@ export default async function Team() {
                 </div>} />
             ))}
           </Lijst>
-          <p className="mt-2 px-1 text-[12px] text-muted">HorecaManager ondersteunt nog geen terugschrijven: na akkoord verschijnt een taak om de ruil in Staff te verwerken.</p>
+          <p className="mt-2 px-1 text-[12px] text-muted">Na akkoord wordt het rooster direct aangepast.</p>
+        </Sectie>
+      )}
+
+      {aanvragen.length > 0 && (
+        <Sectie titel="Verlofaanvragen">
+          <Lijst>
+            {aanvragen.map((v) => (
+              <Rij key={v.id} toon="rood" icoon={<Palmtree size={18} />} titel={`${voornaamVan(org, v.gebruikerId)} · ${v.type}`}
+                sub={`${new Date(`${v.van}T12:00:00`).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}${v.tot && v.tot !== v.van ? ` – ${new Date(`${v.tot}T12:00:00`).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}` : ""}${v.opmerking ? ` · ${v.opmerking}` : ""}`}
+                rechts={<div className="flex gap-1.5">
+                  <form action={beslisVerlof.bind(null, v.id, false)}><button className="rounded-lg px-2.5 py-1.5 text-[12px] font-semibold ring-1 ring-line">Nee</button></form>
+                  <form action={beslisVerlof.bind(null, v.id, true)}><button className="rounded-lg bg-brand-600 px-2.5 py-1.5 text-[12px] font-semibold text-white">Akkoord</button></form>
+                </div>} />
+            ))}
+          </Lijst>
+        </Sectie>
+      )}
+
+      {vandaag.length > 0 && (
+        <Sectie titel="Vandaag op de vloer" rechts={<span className="text-muted">{vandaag.filter((d) => !d.gebruikerId).length ? `${vandaag.filter((d) => !d.gebruikerId).length} open` : "alles bezet"}</span>}>
+          <Lijst>
+            {vandaag.sort((a, b) => a.start.getTime() - b.start.getTime()).map((d) => (
+              <Rij key={d.id} toon={d.gebruikerId ? "navy" : "rood"} icoon={<Users size={18} />} titel={d.gebruikerId ? voornaamVan(org, d.gebruikerId) : "Open dienst"}
+                sub={`${uurLabel(d.start.toISOString())} – ${uurLabel(d.eind.toISOString())} · ${pos.find((p) => p.id === d.positieId)?.naam} · ${vestigingNaam(org, d.vestigingId)}`} />
+            ))}
+          </Lijst>
         </Sectie>
       )}
 

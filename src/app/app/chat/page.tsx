@@ -11,7 +11,7 @@ export default async function Chats() {
   const laatste = await laatsteChats(groepen.map((g) => g.id));
   return (
     <>
-      <PageTop titel="Chat" sub="Groepen worden automatisch bijgewerkt vanuit HorecaManager" />
+      <PageTop titel="Chat" sub="Groepen worden automatisch bijgewerkt vanuit het personeelsbestand" />
       <Sectie>
         <Lijst>
           {groepen.map((g) => {

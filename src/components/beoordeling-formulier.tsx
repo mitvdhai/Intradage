@@ -105,7 +105,7 @@ export function BeoordelingFormulier({
               {advies.begrensdOpEindloon && " · begrensd op het eindloon"}
             </div>
             <div className="mt-3 flex gap-2 rounded-lg bg-navy-50 p-2.5 text-[12px] text-navy-800">
-              <Info size={16} className="shrink-0" /> Dit is een advies. Jij als werkgever neemt het besluit en licht een afwijking toe. Het besluit wordt daarna doorgezet naar HorecaManager.
+              <Info size={16} className="shrink-0" /> Dit is een advies. Jij als werkgever neemt het besluit en licht een afwijking toe. Na het besluit stel je in het personeelsdossier het nieuwe contract op; het loon gaat via de export naar de loonadministratie.
             </div>
 
             {besloten && beoordeling.besluit ? (

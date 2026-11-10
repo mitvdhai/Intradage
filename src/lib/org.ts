@@ -38,7 +38,9 @@ export const getOrg = cache(async (): Promise<Org> => {
   const vestPer = new Map<string, string[]>();
   for (const r of gv) vestPer.set(r.gebruikerId, [...(vestPer.get(r.gebruikerId) ?? []), r.vestigingId]);
 
-  const gebruikers: Gebruiker[] = gebr.map((g) => ({
+  // Na de laatste werkdag sluit het account automatisch (offboarding)
+  const vandaag = new Date().toLocaleDateString("sv-SE");
+  const gebruikers: Gebruiker[] = gebr.filter((g) => !g.uitDienstPer || g.uitDienstPer >= vandaag).map((g) => ({
     id: g.id, voornaam: g.voornaam, achternaam: g.achternaam, rol: g.rol,
     functieId: g.functieId ?? undefined, franchisenemerId: g.franchisenemerId ?? undefined, discipline: g.discipline ?? undefined,
     vestigingIds: vestPer.get(g.id) ?? [], mobiel: g.mobiel, inDienstSinds: g.inDienstSinds,

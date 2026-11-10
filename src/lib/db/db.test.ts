@@ -51,4 +51,21 @@ describe("database", () => {
     const [{ w }] = (await db.execute<{ w: number }>(sql`select count(*)::int as w from waardering`)).rows;
     expect(w).toBeGreaterThan(0);
   });
+
+  it("het gegenereerde rooster houdt zich aan de Arbeidstijdenwet en vult het grootste deel", async () => {
+    const { controleerDienst, leeftijdOp } = await import("../planning/atw");
+    const diensten = await db.select().from(t.dienst);
+    const mensen = await db.select().from(t.gebruiker);
+    const bezet = diensten.filter((d) => d.gebruikerId);
+    expect(bezet.length / diensten.length).toBeGreaterThan(0.6);
+    for (const d of bezet) {
+      const m = mensen.find((x) => x.id === d.gebruikerId)!;
+      const andere = bezet.filter((x) => x.gebruikerId === d.gebruikerId && x.id !== d.id).map((x) => ({ start: x.start, eind: x.eind }));
+      expect(controleerDienst({ start: d.start, eind: d.eind }, leeftijdOp(m.geboortedatum, d.start.toLocaleDateString("sv-SE")), andere), `${m.voornaam} ${d.start.toISOString()}`).toEqual([]);
+    }
+  });
+
+  it("weigert een contract met min > max uren", async () => {
+    await expect(db.insert(t.contract).values({ id: "fout", gebruikerId: "u-sanne", volgnummer: 9, type: "minmax", urenMin: 20, urenMax: 10, uurloon: 15, start: "2026-01-01", tekst: "x" })).rejects.toThrow();
+  });
 });

@@ -21,7 +21,7 @@ export interface Gebruiker {
   inDienstSinds: string; // ISO-datum
   verjaardag?: string; // MM-DD, alleen tonen bij opt-in
   toonVerjaardag?: boolean;
-  personeelsnummer: string; // sleutel richting HorecaManager
+  personeelsnummer: string; // sleutel richting de loonadministratie
   overMij?: string;
 }
 

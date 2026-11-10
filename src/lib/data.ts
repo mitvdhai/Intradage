@@ -171,7 +171,7 @@ export async function chatGroepenVoor(org: Org, u: Gebruiker): Promise<ChatGroep
   });
 }
 
-/** Leden worden afgeleid uit de organisatie (die uit HorecaManager komt): nooit handmatig beheren. */
+/** Leden worden afgeleid uit de organisatie (uit het personeelsbestand): nooit handmatig beheren. */
 export function ledenVan(org: Org, gr: ChatGroep): Gebruiker[] {
   return org.gebruikers.filter((u) => {
     if (gr.type === "vestiging") return u.rol !== "hq" && !!gr.vestigingId && (u.vestigingIds.includes(gr.vestigingId) || (u.rol === "franchisenemer" && scopeVestigingen(org, u).includes(gr.vestigingId)));
@@ -262,7 +262,7 @@ export async function auditLog(limiet = 200): Promise<AuditRegel[]> {
 
 // ---------- Te doen ----------
 
-export interface TeDoe { id: string; titel: string; sub: string; href: string; urgent?: boolean; pct?: number; soort: "bericht" | "leren" | "beoordelen" | "ruil" | "zelfbeoordeling" | "enquete" | "actiepunt" | "beloning" }
+export interface TeDoe { id: string; titel: string; sub: string; href: string; urgent?: boolean; pct?: number; soort: "bericht" | "leren" | "beoordelen" | "ruil" | "zelfbeoordeling" | "enquete" | "actiepunt" | "beloning" | "contract" | "personeel" | "verlof" }
 
 /** Wat moet deze gebruiker nu doen? Basis voor "Te doen", de badge en het meldingencentrum. */
 export async function teDoen(org: Org, u: Gebruiker): Promise<TeDoe[]> {
@@ -293,6 +293,27 @@ export async function teDoen(org: Org, u: Gebruiker): Promise<TeDoe[]> {
     lijst.push({ id: `a-${a.id}`, titel: a.tekst, sub: `Actiepunt · ${telaat ? "te laat, " : ""}deadline ${new Date(a.deadline).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}`, href: a.uitvoeringId ? `/app/evaluaties/${a.uitvoeringId}` : "/app/evaluaties", urgent: telaat, soort: "actiepunt" });
   }
 
+  // Personeelszaken van de medewerker zelf
+  const [mijnContracten, mijnTaken, mijnBesch] = await Promise.all([
+    db.select().from(t.contract).where(and(eq(t.contract.gebruikerId, u.id), eq(t.contract.status, "ter-ondertekening"))),
+    db.select().from(t.lifecycleTaak).where(and(eq(t.lifecycleTaak.gebruikerId, u.id), eq(t.lifecycleTaak.wie, "medewerker"))),
+    db.select().from(t.beschikbaarheid).where(eq(t.beschikbaarheid.gebruikerId, u.id)),
+  ]);
+  for (const c of mijnContracten.filter((c) => !c.ondertekendWerknemer)) lijst.push({ id: `ct-${c.id}`, titel: c.volgnummer > 1 ? "Je nieuwe contract tekenen" : "Je contract tekenen", sub: `Ingangsdatum ${new Date(`${c.start}T12:00:00`).toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}`, href: `/app/werk/contract/${c.id}`, urgent: true, soort: "contract" });
+  for (const tk of mijnTaken.filter((x) => !x.klaar && x.sleutel !== "leerpad" && x.sleutel !== "contract-werknemer")) lijst.push({ id: `lc-${tk.id}`, titel: tk.titel, sub: tk.fase === "onboarding" ? "Onboarding" : tk.fase === "offboarding" ? "Laatste werkweken" : "Voor je start", href: tk.sleutel === "voorstellen" ? "/app" : tk.sleutel === "exit" ? "/app/enquetes" : "/app/werk/beschikbaarheid", soort: "personeel" });
+  if (!mijnBesch.length && (u.rol === "medewerker" || u.rol === "shiftleider")) lijst.push({ id: "beschikbaarheid", titel: "Geef je beschikbaarheid door", sub: "Dan kun je worden ingeroosterd", href: "/app/werk/beschikbaarheid", soort: "personeel" });
+
+  if (isLeiding(u)) {
+    const { signalen } = await import("./personeel/data");
+    const sig = await signalen(org, u);
+    const verlofAanvr = sig.filter((x) => x.soort === "verlof").length;
+    if (verlofAanvr) lijst.push({ id: "verlof", titel: `${verlofAanvr} verlofaanvra${verlofAanvr > 1 ? "gen" : "ag"} beoordelen`, sub: "Personeel", href: "/app/team", soort: "verlof" });
+    const teken = sig.filter((x) => x.soort === "teken" && u.rol === "franchisenemer").length;
+    if (teken) lijst.push({ id: "teken", titel: `${teken} contract${teken > 1 ? "en" : ""} tekenen als werkgever`, sub: "Beheeromgeving", href: "/beheer/personeel", urgent: true, soort: "contract" });
+    const urgent = sig.filter((x) => x.urgent && !["verlof", "teken"].includes(x.soort)).length;
+    if (urgent) lijst.push({ id: "personeel", titel: `${urgent} personeelszak${urgent > 1 ? "en" : ""} vragen aandacht`, sub: "Contracten, certificaten, on-/offboarding", href: "/beheer/personeel", urgent: true, soort: "personeel" });
+  }
+
   if (isLeiding(u)) {
     const team = teamVan(org, u).map((x) => x.id);
     const [inz, mijnBeo, ruil] = await Promise.all([inzendingenVan(team), beoordelingen({ beoordelaarId: u.id }), ruilverzoeken()]);
@@ -303,7 +324,8 @@ export async function teDoen(org: Org, u: Gebruiker): Promise<TeDoe[]> {
     const wacht = ruil.filter((r) => r.status === "wacht-op-akkoord" && teamSet.has(r.aangebodenDoor)).length;
     if (wacht) lijst.push({ id: "ruil", titel: `${wacht} ruilverzoek${wacht > 1 ? "en" : ""} goedkeuren`, sub: "Diensten", href: "/app/team", soort: "ruil" });
   }
-  return lijst;
+  // Urgent eerst, verder in de volgorde waarin ze zijn toegevoegd
+  return lijst.map((x, i) => ({ x, i })).sort((a, b) => Number(!!b.x.urgent) - Number(!!a.x.urgent) || a.i - b.i).map(({ x }) => x);
 }
 
 export function verjaardagenBinnenkort(org: Org, u: Gebruiker, dagen = 7) {
