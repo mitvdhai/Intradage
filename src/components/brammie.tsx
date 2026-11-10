@@ -5,7 +5,7 @@ import { toggleLike } from "@/lib/acties-betrokkenheid";
 import { cx } from "./ui";
 
 /**
- * Het "sausje": ons eigen like. Een hartje gespoten met ketchup uit de knijpfles,
+ * De "brammie" (meervoud: brammies): ons eigen like. Een hartje gespoten met ketchup uit de knijpfles,
  * in één doorlopende lijn. Leeg = alleen de omtrek; gegeven = ketchup met glans en spatjes.
  */
 const LIJN = "M13.3 20.4C9.6 17.3 4.2 13.6 4 9.2 3.9 6.6 5.6 4.9 7.7 4.9c1.9 0 3.3 1.3 4.2 3.2.8-2 2.4-3.4 4.4-3.3 2.2.1 3.8 2 3.6 4.5-.3 4.2-5.1 7.6-8.6 11.2-.3.3-.6.2-.9 0";
@@ -29,21 +29,21 @@ export function KetchupHart({ vol, className }: { vol: boolean; className?: stri
   );
 }
 
-export function SausjeKnop({ type, id, aantal, gegeven }: { type: "bericht" | "waardering"; id: string; aantal: number; gegeven: boolean }) {
+export function BrammieKnop({ type, id, aantal, gegeven }: { type: "bericht" | "waardering"; id: string; aantal: number; gegeven: boolean }) {
   const [stand, zet] = useOptimistic({ aantal, gegeven }, (s, nieuw: boolean) => ({ gegeven: nieuw, aantal: s.aantal + (nieuw ? 1 : -1) }));
   const [, start] = useTransition();
   const [spat, setSpat] = useState(0);
   return (
-    <button type="button" aria-pressed={stand.gegeven} title={stand.gegeven ? "Sausje terugnemen" : "Geef een sausje"}
+    <button type="button" aria-pressed={stand.gegeven} title={stand.gegeven ? "Brammie terugnemen" : "Geef een brammie"}
       onClick={() => {
         const nieuw = !stand.gegeven;
         if (nieuw) setSpat((n) => n + 1);
         start(async () => { zet(nieuw); await toggleLike(type, id); });
       }}
       className={cx("tap inline-flex items-center gap-1.5 rounded-lg px-2 text-[13px] font-semibold", stand.gegeven ? "text-brand-700" : "text-muted")}>
-      <span key={spat} className={spat && stand.gegeven ? "sausje-plop" : undefined}><KetchupHart vol={stand.gegeven} /></span>
-      {stand.aantal > 0 ? <span>{stand.aantal}</span> : <span>Sausje</span>}
-      <span className="sr-only">{stand.gegeven ? " · je gaf een sausje" : " · geef een sausje"}</span>
+      <span key={spat} className={spat && stand.gegeven ? "brammie-plop" : undefined}><KetchupHart vol={stand.gegeven} /></span>
+      {stand.aantal > 0 ? <span>{stand.aantal}</span> : <span>Brammie</span>}
+      <span className="sr-only">{stand.aantal === 1 ? " brammie" : " brammies"}{stand.gegeven ? " · je gaf een brammie" : " · geef een brammie"}</span>
     </button>
   );
 }

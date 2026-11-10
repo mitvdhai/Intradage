@@ -127,7 +127,7 @@ Documenten worden niet op je telefoon bewaard, en elke inzage komt in het logboe
 
 - Op de tijdlijn staan berichten van HQ en je franchisenemer, posts van collega's, waarderingen en **momenten**: verjaardagen, jubilea en nieuwe collega's.
 - Wil je iets delen, zoals een foto van een drukke zaterdag? Tik op **Deel iets met …**, typ je bericht en tik op **Plaatsen**. Alleen je eigen team ziet het.
-- Vind je iets leuk? Geef een **sausje**: tik op het ketchup-hartje. Tik nog een keer om het terug te nemen. Op het tekstballonnetje reageer je.
+- Vind je iets leuk? Geef een **brammie**: tik op het ketchup-hartje. Onder een bericht zie je hoeveel brammies het heeft gekregen. Tik nog een keer om het terug te nemen. Op het tekstballonnetje reageer je.
 - Bij een verjaardag of jubileum tik je op **Feliciteer** om iemand te waarderen.
 - Een eigen post kun je weer verwijderen. Je leidinggevende kan posts verwijderen die niet passen.
 

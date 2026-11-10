@@ -22,7 +22,7 @@ Op het startscherm kies je een persoon:
 
 | Persoon | Rol | Laat zien |
 |---|---|---|
-| Sanne | Medewerker | Startscherm en tijdlijn (posten, sausje geven), verplicht bericht bevestigen, waarderen, beloningen, pulse, evenementen, smoelenboek, leren, handboek-assistent, rooster, functie, documenten met sms-code (demo: `123456`) |
+| Sanne | Medewerker | Startscherm en tijdlijn (posten, brammies geven), verplicht bericht bevestigen, waarderen, beloningen, pulse, evenementen, smoelenboek, leren, handboek-assistent, rooster, functie, documenten met sms-code (demo: `123456`) |
 | Yara | Shiftleider | Dagchecklists openen, sluiten en HACCP invullen |
 | Erik | Franchisenemer | Team, challenges beoordelen, ruil goedkeuren, beoordeling invullen met live salarisadvies, besluit vastleggen |
 | Lisa | HQ Kwaliteit | Vestigingsevaluatie uitvoeren met knock-outs en actiepunten; beheer: overzicht, berichten, evaluaties |

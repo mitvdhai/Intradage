@@ -10,7 +10,7 @@
   - **functiehuis**: functie, profiel_item en functie_profiel, met weging en vereist niveau;
   - **beoordeling**: beoordeling en beoordeling_score (per onderdeel en bron), plus medewerker_niveau;
   - **communicatie, leren, documenten** en het **audit_log**;
-  - **betrokkenheid**: `waarde` (kernwaarden), `waardering` (check: niet aan jezelf), `like` (het "sausje", op bericht of waardering), `beloning` en `beloning_aanvraag`, `enquete` met `enquete_deelname` (wie) en `enquete_antwoord` (wat, bij anonieme peilingen zonder gebruiker), `evenement` en `evenement_aanmelding`;
+  - **betrokkenheid**: `waarde` (kernwaarden), `waardering` (check: niet aan jezelf), `like` (de "brammie", op bericht of waardering), `beloning` en `beloning_aanvraag`, `enquete` met `enquete_deelname` (wie) en `enquete_antwoord` (wat, bij anonieme peilingen zonder gebruiker), `evenement` en `evenement_aanmelding`;
   - **operatie**: `checklist_sjabloon` (onderdelen met weging en vragen als JSON, versie), `checklist_uitvoering` (antwoorden, score, knock-out) en `actiepunt`.
 
   Check-constraints bewaken niveaus (1–4) en wegingen. Een unieke sleutel zorgt voor maximaal één beoordeling per medewerker per periode. Geld wordt opgeslagen als `numeric`.

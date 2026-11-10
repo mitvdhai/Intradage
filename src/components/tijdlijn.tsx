@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Award, Cake, MessageCircle, PartyPopper, Sparkles, Trash2 } from "lucide-react";
 import { verwijderPost } from "@/lib/acties-betrokkenheid";
-import { SausjeKnop } from "./sausje";
+import { BrammieKnop } from "./brammie";
 import type { TijdlijnItem } from "@/lib/betrokkenheid";
 import { afzenderLabel, DISCIPLINE_LABEL, vestigingNaam } from "@/lib/data";
 import type { Org } from "@/lib/org";
@@ -35,7 +35,7 @@ export function TijdlijnKaart({ item, org, u }: { item: TijdlijnItem; org: Org; 
           <p className="line-clamp-4 whitespace-pre-line text-[15px] leading-relaxed text-ink">{b.inhoud.replace(/^- /gm, "• ")}</p>
         </Link>
         <div className="flex items-center gap-1 border-t border-line px-2 py-0.5">
-          <SausjeKnop type="bericht" id={b.id} aantal={item.likes} gegeven={item.geliked} />
+          <BrammieKnop type="bericht" id={b.id} aantal={item.likes} gegeven={item.geliked} />
           <Link href={`/app/berichten/${b.id}`} className="tap inline-flex items-center gap-1.5 rounded-lg px-2 text-[13px] font-semibold text-muted"><MessageCircle size={17} /> {item.reacties > 0 ? item.reacties : ""}</Link>
           {magVerwijderen && <form action={verwijderPost.bind(null, b.id)} className="ml-auto"><button className="tap rounded-lg px-2 text-muted" aria-label="Verwijderen"><Trash2 size={16} /></button></form>}
         </div>
@@ -54,7 +54,7 @@ export function TijdlijnKaart({ item, org, u }: { item: TijdlijnItem; org: Org; 
         </Link>
         <p className="px-4 pb-2 pt-2 text-[15px] leading-relaxed">“{w.tekst}”</p>
         <div className="flex items-center border-t border-line px-2 py-0.5">
-          <SausjeKnop type="waardering" id={w.id} aantal={item.likes} gegeven={item.geliked} />
+          <BrammieKnop type="waardering" id={w.id} aantal={item.likes} gegeven={item.geliked} />
           <Link href={`/app/waardering/geven?aan=${w.aanId}`} className="ml-auto mr-2 text-[13px] font-semibold text-navy-600">Ook waarderen</Link>
         </div>
       </article>
