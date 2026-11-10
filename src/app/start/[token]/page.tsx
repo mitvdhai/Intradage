@@ -60,7 +60,7 @@ export default async function Start({ params }: PageProps<"/start/[token]">) {
           <ActieForm actie={preboardingDocument.bind(null, token)} knop="Uploaden" variant="rood">
             <input type="hidden" name="categorie" value="identiteit" /><input type="hidden" name="titel" value="Kopie identiteitsbewijs" />
             <input name="bestand" type="file" accept="image/*,application/pdf" capture="environment" className="text-sm" />
-            <p className="text-[12px] text-muted">Dit is wettelijk verplicht voor je werkgever. Tip: maak je BSN en pasfoto onzichtbaar met de KopieID-app van de overheid; je werkgever mag die niet bewaren.</p>
+            <p className="text-[12px] text-muted">Je werkgever is wettelijk verplicht je identiteit vast te stellen en een kopie te bewaren voor de loonadministratie. Tip: zet er met de KopieID-app van de overheid een watermerk op, bijvoorbeeld “kopie voor werkgever”.</p>
           </ActieForm>
         </Stap>
         <Stap nr={3} {...stap("beschikbaarheid")} titel="Wanneer kun je werken?">

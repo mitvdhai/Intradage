@@ -106,7 +106,7 @@ export default async function Dossier({ params, searchParams }: PageProps<"/behe
                 <div><span className={label}>Werkt in (meerdere mogelijk)</span>
                   <div className="space-y-1">{org.vestigingen.filter((v) => scope.includes(v.id)).map((v) => <label key={v.id} className="flex items-center gap-2 text-sm"><input type="checkbox" name="vestiging" value={v.id} defaultChecked={m.vestigingIds.includes(v.id)} /> {v.naam} · {v.plaats}</label>)}</div></div>
                 <div><span className={label}>Inzetbaar op</span>
-                  <div className="space-y-1">{pos.map((p) => <label key={p.id} className="flex items-center gap-2 text-sm"><input type="checkbox" name="positie" value={p.id} defaultChecked={mijnPos.some((x) => x.positieId === p.id)} /> <span className="h-2.5 w-2.5 rounded-full" style={{ background: p.kleur }} />{p.naam}{p.minLeeftijd ? <span className="text-[11px] text-muted">vanaf {p.minLeeftijd}</span> : null}</label>)}</div></div>
+                  <div className="space-y-1">{pos.map((p) => <label key={p.id} className="flex items-center gap-2 text-sm"><input type="checkbox" name="positie" value={p.id} defaultChecked={mijnPos.some((x) => x.positieId === p.id)} disabled={p.minLeeftijd > 0 && (lft === null || lft < p.minLeeftijd)} /> <span className="h-2.5 w-2.5 rounded-full" style={{ background: p.kleur }} />{p.naam}{p.minLeeftijd ? <span className="text-[11px] text-muted">vanaf {p.minLeeftijd}</span> : null}</label>)}</div></div>
               </div>
               <div><span className={label}>Vaste beschikbaarheid</span>
                 <div className="grid grid-cols-1 gap-1 md:grid-cols-2">

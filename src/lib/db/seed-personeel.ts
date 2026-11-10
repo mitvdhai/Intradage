@@ -24,7 +24,7 @@ const ADRES: Record<string, string> = { "v-centrum": "Lijnbaan 12, Rotterdam", "
 const POSITIES = [
   { id: "pos-shift", naam: "Shiftleider", kleur: "#16336e", volgorde: 1, minLeeftijd: 18 },
   { id: "pos-bakken", naam: "Bakken", kleur: "#d0112b", volgorde: 2, minLeeftijd: 16 },
-  { id: "pos-kassa", naam: "Kassa", kleur: "#2f56a6", volgorde: 3, minLeeftijd: 0 },
+  { id: "pos-kassa", naam: "Kassa", kleur: "#2f56a6", volgorde: 3, minLeeftijd: 16 },
   { id: "pos-uitgifte", naam: "Uitgifte", kleur: "#b45309", volgorde: 4, minLeeftijd: 0 },
 ];
 
@@ -173,7 +173,7 @@ export async function seedPersoneel(db: DB) {
         beschikbaar: Object.fromEntries(Object.entries(m.besch).map(([wd, [van, tot]]) => [Number(wd), { van, tot }])),
         urenMin: m.c[1], urenMax: m.c[2] || 12,
       }));
-      const res = maakSuggestie({ slots, kandidaten, bestaand: bezet });
+      const res = maakSuggestie({ slots, kandidaten, bestaand: bezet, minLeeftijd: Object.fromEntries(POSITIES.map((p) => [p.id, p.minLeeftijd])) });
       for (const tw of res.toewijzingen) {
         const p = { start: opTijd(tw.slot.datum, tw.slot.van), eind: opTijd(tw.slot.datum, tw.slot.tot) };
         if (tw.gebruikerId) (bezet[tw.gebruikerId] ??= []).push(p);

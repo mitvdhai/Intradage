@@ -68,13 +68,54 @@ Wissel van persoon via **Wissel persoon** bovenaan het scherm (op een groter sch
 
 <br clear="all" />
 
-<img src="img/06-rooster.png" width="300" align="right" />
+<img src="img/53-app-rooster.png" width="300" align="right" />
 
 **Mijn werk: rooster**
 
-- Je rooster komt uit HorecaManager.
+- Je ziet je diensten van de komende drie weken.
+- Onder **Open diensten voor jou** staan diensten die bij je beschikbaarheid passen. Tik op **Ik doe ’m** en hij is van jou.
 - **Dienst aanbieden**: tik eerst daarop en kies dan de dienst. Collega's met dezelfde functie zien hem in de teamchat en kunnen hem overnemen. Je leidinggevende keurt de ruil goed.
-- Beschikbaarheid en verlof regel je voorlopig in de Staff-app.
+- Met **Rooster in je agenda** zet je je diensten in de agenda van je telefoon.
+
+<br clear="all" />
+
+<img src="img/54-app-beschikbaarheid.png" width="300" align="right" />
+
+**Beschikbaarheid en klokken**
+
+1. **Mijn werk › Beschikbaarheid**: vink de dagen en tijden aan waarop je normaal kunt werken en tik op **Opslaan**. Je wordt alleen dan ingepland.
+2. Ben je jonger dan 18? Het rooster houdt zich vanzelf aan de Arbeidstijdenwet: max. 9 uur per dienst en niet na 23:00 (onder de 16: niet na 19:00).
+3. Vanaf een half uur voor je dienst staat op het startscherm **Inklokken**. Na je dienst vul je je pauze in en tik je op **Uitklokken**.
+4. Je uren zie je bij **Mijn werk › Mijn uren**.
+
+<br clear="all" />
+
+<img src="img/55-app-verlof.png" width="300" align="right" />
+
+**Verlof en ziek melden**
+
+- Bij **Mijn werk › Verlof en ziekmelden** zie je je vakantiesaldo en vraag je verlof aan. Je leidinggevende keurt het goed of af.
+- **Ziek melden**: je diensten van vandaag en morgen komen open te staan voor collega's. Weer fit? Tik op **Ik ben beter**.
+
+<br clear="all" />
+
+<img src="img/56-app-contract.png" width="300" align="right" />
+
+**Je contract tekenen**
+
+1. Een nieuw contract of een verlenging staat bovenaan bij *Te doen*.
+2. Lees het, vink aan dat je akkoord bent en zet met je vinger je handtekening.
+3. Tik op **Contract tekenen**. Daarna tekent je werkgever. Je contracten staan bij **Documenten**.
+
+<br clear="all" />
+
+<img src="img/59-preboarding.png" width="300" align="right" />
+
+**Nieuw: voor je eerste werkdag**
+
+Na je aanname krijg je een persoonlijke link. Daar vul je je gegevens in (adres, IBAN, BSN, noodcontact), upload je je ID, geef je je beschikbaarheid door en teken je je contract. Zodra jij en je werkgever hebben getekend, kun je inloggen in de app.
+
+Ken je iemand voor het team? Ga naar **Meer › Ken jij iemand voor ons team?** en deel een vacature. Wordt diegene aangenomen, dan krijg je 50 punten.
 
 <br clear="all" />
 
@@ -246,7 +287,7 @@ Je waardering verschijnt op de tijdlijn van jullie team. Je collega krijgt er 10
 - De app geeft een **advies** volgens de beloningsregeling. Dat advies blijft altijd tussen het basis- en het eindloon van de functiegroep.
 - Ontbreekt een verplicht certificaat, dan is de uitkomst begrensd.
 - Na het gesprek leg **jij** het besluit vast. Wijk je af van het advies, dan vraagt de app om een korte toelichting.
-- Het besluit komt in het logboek en wordt doorgezet naar HorecaManager.
+- Het besluit komt in het logboek. Een nieuw uurloon leg je vast in een nieuw contract in het personeelsdossier.
 
 <br clear="all" />
 
@@ -280,6 +321,22 @@ Je waardering verschijnt op de tijdlijn van jullie team. Je collega krijgt er 10
 4. Een te laat actiepunt kleurt rood.
 
 <br clear="all" />
+
+**Personeelsbeheer (beheeromgeving, ook voor managers)**
+
+![Planning](img/43-beheer-planning.png)
+
+- **Planning**: kies vestiging en week en klik op **Rooster voorstellen**. Intradage vult de standaardbezetting met wie beschikbaar is, rekening houdend met verlof, contracturen en de Arbeidstijdenwet. Schuiven doe je met de keuzelijst bij een dienst; die toont alleen wie het mag en kan. Klik daarna op **Publiceren**.
+- **Vestigingen**: openingstijden en per dag de standaardbezetting (positie, aantal, van–tot).
+- **Medewerkers**: het personeelsdossier. Je ziet vestigingen, posities, beschikbaarheid, contracten, documenten, verlof en uren. Rechts staan signalen: aanzegtermijn, ketenregeling, verlopen certificaten.
+- **Contracten**: opstellen vanuit het sjabloon; de medewerker tekent in de app, jij daarna als werkgever.
+- **Uit dienst melden**: laatste werkdag invullen. Diensten daarna komen open te staan, en het account sluit vanzelf na de laatste werkdag.
+
+![Werving](img/49-beheer-werving.png)
+
+- **Werving**: vacatures plaatsen (openbare pagina *Werken bij*), kandidaten per fase volgen en met **Aannemen** dossier, contract en de persoonlijke startlink in één keer aanmaken.
+- **Uren**: geklokt naast gepland, corrigeren, **Alles goedkeuren**, en exporteren voor de loonadministratie (uren en mutaties als CSV).
+- **Verlof en ziekte**: aanvragen beoordelen (je ziet hoeveel diensten ze raken) en zien wie er ziek is.
 
 ### 4. HQ (beheeromgeving)
 

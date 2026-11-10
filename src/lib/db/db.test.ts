@@ -58,8 +58,11 @@ describe("database", () => {
     const mensen = await db.select().from(t.gebruiker);
     const bezet = diensten.filter((d) => d.gebruikerId);
     expect(bezet.length / diensten.length).toBeGreaterThan(0.6);
+    const posities = await db.select().from(t.positie);
     for (const d of bezet) {
       const m = mensen.find((x) => x.id === d.gebruikerId)!;
+      const min = posities.find((p) => p.id === d.positieId)!.minLeeftijd;
+      expect(leeftijdOp(m.geboortedatum, d.start.toLocaleDateString("sv-SE")) ?? 0, `${m.voornaam} te jong voor ${d.positieId}`).toBeGreaterThanOrEqual(min);
       const andere = bezet.filter((x) => x.gebruikerId === d.gebruikerId && x.id !== d.id).map((x) => ({ start: x.start, eind: x.eind }));
       expect(controleerDienst({ start: d.start, eind: d.eind }, leeftijdOp(m.geboortedatum, d.start.toLocaleDateString("sv-SE")), andere), `${m.voornaam} ${d.start.toISOString()}`).toEqual([]);
     }

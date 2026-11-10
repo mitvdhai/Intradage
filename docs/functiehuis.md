@@ -29,7 +29,7 @@
 4. Het totaal bepaalt via de banden van de beloningsregeling de **uitkomst** (onvoldoende … uitstekend).
 5. Is een **voorwaarde** niet behaald, dan is de uitkomst maximaal de ingestelde grens (standaard "matig").
 6. De uitkomst geeft een **adviespercentage**. Het nieuwe uurloon komt nooit onder het basisloon en nooit boven het eindloon van de functiegroep. Bovenschaligen krijgen geen verhoging.
-7. De **franchisenemer beslist**. Wie afwijkt van het advies, moet een toelichting geven. Het besluit komt in het logboek en wordt doorgezet naar HorecaManager. In het prototype gebeurt dat doorzetten nog handmatig.
+7. De **franchisenemer beslist**. Wie afwijkt van het advies, moet een toelichting geven. Het besluit komt in het logboek en het nieuwe uurloon wordt vastgelegd in een nieuw contract in het personeelsdossier. In het prototype gebeurt dat doorzetten nog handmatig.
 
 ## Spelregels en juridische aandachtspunten
 

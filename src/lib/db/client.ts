@@ -65,5 +65,7 @@ async function seedAlsLeeg(db: DB) {
       const { seedPersoneel } = await import("./seed-personeel");
       await seedPersoneel(tx as unknown as DB);
     }
+    // Bedrijfsregel: kassa pas vanaf 16 (ook op databases die eerder zijn gevuld)
+    await tx.execute(sql`update positie set min_leeftijd = 16 where id = 'pos-kassa' and min_leeftijd < 16`);
   });
 }

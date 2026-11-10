@@ -1,15 +1,15 @@
 # Intradage
 
-Het interne platform van Bram Ladage: één app voor communicatie, waardering en werkbeleving. Nieuws en een tijdlijn met posts, chat, waardering op kernwaarden met punten en beloningen, peilingen (pulse, eNPS, polls), evenementen, smoelenboek, leren, het handboek met AI-assistent, dagchecklists en vestigingsevaluaties, rooster en documenten, en een functiehuis met gewogen beoordelingen. Daarnaast een beheeromgeving voor HQ en franchisenemers.
+Het interne platform van Bram Ladage: één app voor communicatie, waardering, werkbeleving en het complete personeelsbeheer (planning, uren, verlof, werving, contracten), zonder koppeling met HorecaManager. Nieuws en een tijdlijn met posts, chat, waardering op kernwaarden met punten en beloningen, peilingen (pulse, eNPS, polls), evenementen, smoelenboek, leren, het handboek met AI-assistent, dagchecklists en vestigingsevaluaties, rooster, klokken, verlof en documenten, en een functiehuis met gewogen beoordelingen. Daarnaast een beheeromgeving voor HQ en franchisenemers.
 
 ![Schermen](docs/schermen.png)
 
-> **Status: werkend prototype op PostgreSQL.** Alle schermen en flows werken en worden opgeslagen in de database. HorecaManager (Staff) is nog gesimuleerd achter een adapter.
+> **Status: werkend prototype op PostgreSQL.** Alle schermen en flows werken en worden opgeslagen in de database. Rooster, uren en personeelsdossier staan in Intradage zelf; voor de loonadministratie is er een CSV-export.
 >
 > - Handleiding voor gebruikers: [docs/handleiding-gebruikers.pdf](docs/handleiding-gebruikers.pdf) · [docs/handleiding.md](docs/handleiding.md)
 > - Live zetten op Railway: [docs/deploy.md](docs/deploy.md)
 > - Keuzes en het pad naar productie: [docs/architectuur.md](docs/architectuur.md)
-> - Voorstel met marktverkenning (6 platforms): [docs/voorstel/voorstel-v4.pdf](docs/voorstel/voorstel-v4.pdf)
+> - Voorstel met marktverkenning en personeelsbeheer: [docs/voorstel/voorstel-v5.pdf](docs/voorstel/voorstel-v5.pdf)
 
 ## Starten
 
@@ -24,7 +24,8 @@ Op het startscherm kies je een persoon:
 |---|---|---|
 | Sanne | Medewerker | Startscherm en tijdlijn (posten, brammies geven), verplicht bericht bevestigen, waarderen, beloningen, pulse, evenementen, smoelenboek, leren, handboek-assistent, rooster, functie, documenten met sms-code (demo: `123456`) |
 | Yara | Shiftleider | Dagchecklists openen, sluiten en HACCP invullen |
-| Erik | Franchisenemer | Team, challenges beoordelen, ruil goedkeuren, beoordeling invullen met live salarisadvies, besluit vastleggen |
+| Erik | Franchisenemer | Beheer › Personeel: rooster voorstellen en publiceren, dossiers, contract tekenen als werkgever, werving en aannemen, uren goedkeuren en exporteren. In de app: team, ruil en verlof goedkeuren, beoordelen met salarisadvies |
+| Noor | Vestigingsmanager | Planning, uren en verlof voor Centrum en Markt (alleen het personeelsdeel van beheer) |
 | Lisa | HQ Kwaliteit | Vestigingsevaluatie uitvoeren met knock-outs en actiepunten; beheer: overzicht, berichten, evaluaties |
 | Joost | HQ HR | Beheer: betrokkenheid (eNPS, peiling starten, beloningen uitreiken), functiehuis, beloningsregeling, beoordelingen, logboek |
 
@@ -44,6 +45,7 @@ Op het startscherm kies je een persoon:
 | `DEMO_WACHTWOORD` | aanbevolen | Wachtwoord op het demo-inlogscherm |
 | `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` | nee | Taalmodel voor handboekantwoorden |
 | `RAILPACK_NODE_VERSION` | Railway | `22` |
+| `TZ` | nee | Staat standaard op `Europe/Amsterdam` (roosters en klokken) |
 
 ### Optioneel: AI-antwoorden
 
@@ -83,7 +85,9 @@ src/
     db/schema.ts             PostgreSQL-schema (25 tabellen, enums, constraints)
     db/client.ts             verbinding (pg of PGlite), migraties, seed bij lege database
     db/seed.ts               demodata
-    staff/adapter.ts         HorecaManager-koppeling (nu: MockStaffAdapter)
+    staff/adapter.ts         rooster uit de eigen database (gepubliceerde diensten)
+    planning/                Arbeidstijdenwet-regels en roostervoorstel (met tests)
+    personeel/               data, acties en sjablonen voor personeelsbeheer
     functiehuis/             functies, profielen, weging, beoordeling → salarisadvies
     handboek/                zoeken in passages + assistent met bronvermelding
 drizzle/                     SQL-migraties

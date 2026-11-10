@@ -9,7 +9,7 @@ import { audit } from "../audit";
 import { getDb } from "../db/client";
 import * as t from "../db/schema";
 import { controleerDienst, leeftijdOp, standaardPauze } from "../planning/atw";
-import { maakSuggestie, naarMin, opTijd, slotsVoorWeek } from "../planning/suggestie";
+import { maakSuggestie, naarMin, opTijd, slotsVoorWeek, teJongVoor } from "../planning/suggestie";
 import { vereisGebruiker } from "../session";
 import {
   contract as leesContract, contractenVan, dienst as leesDienst, diensten, kandidaat as leesKandidaat, magDossier, medewerker as leesMedewerker,
@@ -108,7 +108,8 @@ export async function maakRoosterSuggestie(vestigingId: string, maandag: string)
       const gedekt = blijft.filter((d) => d.positieId === s.positieId && d.start.getTime() === opTijd(s.datum, s.van).getTime() && d.eind.getTime() === opTijd(s.datum, s.tot).getTime()).length;
       return s.nr > gedekt;
     });
-  const res = maakSuggestie({ slots, kandidaten, bestaand: periodesPerPersoon(elders, new Set(weg.map((d) => d.id))) });
+  const pos = await db.select().from(t.positie);
+  const res = maakSuggestie({ slots, kandidaten, bestaand: periodesPerPersoon(elders, new Set(weg.map((d) => d.id))), minLeeftijd: Object.fromEntries(pos.map((p) => [p.id, p.minLeeftijd])) });
   if (weg.length) await db.delete(t.dienst).where(inArray(t.dienst.id, weg.map((d) => d.id)));
   if (res.toewijzingen.length) await db.insert(t.dienst).values(res.toewijzingen.map((tw) => ({
     id: id("d"), vestigingId, positieId: tw.slot.positieId, gebruikerId: tw.gebruikerId, start: opTijd(tw.slot.datum, tw.slot.van), eind: opTijd(tw.slot.datum, tw.slot.tot), pauzeMin: tw.pauzeMin, status: "concept" as const, bron: "suggestie" as const,
@@ -152,6 +153,8 @@ async function controleerToewijzing(d: typeof t.dienst.$inferSelect, gebruikerId
   const pos = await db.select().from(t.gebruikerPositie).where(and(eq(t.gebruikerPositie.gebruikerId, gebruikerId), eq(t.gebruikerPositie.positieId, d.positieId)));
   if (!pos.length) return `${m.voornaam} is niet inzetbaar op deze positie.`;
   const datum = d.start.toLocaleDateString("sv-SE");
+  const [positie] = await db.select().from(t.positie).where(eq(t.positie.id, d.positieId));
+  if (teJongVoor(m.geboortedatum, datum, positie?.minLeeftijd)) return `${m.voornaam} is te jong voor ${positie.naam} (vanaf ${positie.minLeeftijd} jaar).`;
   const verlof = await db.select().from(t.verlof).where(and(eq(t.verlof.gebruikerId, gebruikerId), eq(t.verlof.status, "goedgekeurd")));
   if (verlof.some((v) => v.van <= datum && (!v.tot || v.tot >= datum))) return `${m.voornaam} heeft dan verlof of is ziek.`;
   const rond = await diensten({ gebruikerIds: [gebruikerId], van: new Date(d.start.getTime() - 8 * 86400000), tot: new Date(d.eind.getTime() + 8 * 86400000) });
@@ -350,6 +353,10 @@ export async function slaDossierOp(gebruikerId: string, _: unknown, fd: FormData
   const pos = fd.getAll("positie").map(String);
   const geb = tekst(fd, "geboortedatum");
   const db = await getDb();
+  const geboorte = isDatum(geb) ? geb : m.geboortedatum;
+  const posities = await db.select().from(t.positie);
+  const teJong = posities.filter((p) => pos.includes(p.id) && teJongVoor(geboorte, vandaagIso(), p.minLeeftijd));
+  if (teJong.length) return { fout: `${m.voornaam} is te jong voor ${teJong.map((p) => `${p.naam} (vanaf ${p.minLeeftijd})`).join(", ")}.` };
   await db.update(t.gebruiker).set({
     functieId: tekst(fd, "functie") || m.functieId, rol: (["medewerker", "shiftleider", "manager"].includes(tekst(fd, "rol")) ? tekst(fd, "rol") : m.rol) as typeof m.rol,
     geboortedatum: isDatum(geb) ? geb : m.geboortedatum, email: tekst(fd, "email") || m.email, mobiel: tekst(fd, "mobiel") || m.mobiel,
@@ -630,7 +637,9 @@ export async function neemAan(kandidaatId: string, _: unknown, fd: FormData): Pr
     personeelsnummer: `P${Date.now().toString(36).toUpperCase()}`, actief: false, status: "preboarding", uitnodigingToken: token, agendaToken: crypto.randomUUID().slice(0, 16),
   });
   await db.insert(t.gebruikerVestiging).values({ gebruikerId, vestigingId: v.vestigingId });
-  await db.insert(t.gebruikerPositie).values([{ gebruikerId, positieId: "pos-kassa" }, { gebruikerId, positieId: "pos-uitgifte" }]);
+  // Standaardposities, alleen waar de nieuwe medewerker oud genoeg voor is (bij de start)
+  const startPos = (await db.select().from(t.positie)).filter((p) => ["pos-kassa", "pos-uitgifte"].includes(p.id) && !teJongVoor(k.geboortedatum, start, p.minLeeftijd));
+  if (startPos.length) await db.insert(t.gebruikerPositie).values(startPos.map((p) => ({ gebruikerId, positieId: p.id })));
   const eind = maanden > 0 ? deadlineVan(start, Math.round(maanden * 30.44) - 1) : null;
   const proeftijdTot = eind && maanden >= 6 ? deadlineVan(start, 30) : null;
   const functie = org.functies.find((f) => f.id === v.functieId);

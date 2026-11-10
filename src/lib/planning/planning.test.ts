@@ -78,6 +78,15 @@ describe("Roostersuggestie", () => {
     expect(res.toewijzingen[0].gebruikerId).toBe("a");
   });
 
+  it("plant nooit iemand onder de minimumleeftijd van een positie in (kassa vanaf 16)", () => {
+    const kassa = slots.filter((s) => s.positieId === "kassa");
+    const res = maakSuggestie({ slots: kassa, kandidaten: [k("vijftien", { geboortedatum: "2011-06-01" }), k("zestien", { geboortedatum: "2010-01-01" })], bestaand: {}, minLeeftijd: { kassa: 16 } });
+    expect(res.toewijzingen.map((t) => t.gebruikerId)).not.toContain("vijftien");
+    const alleenJong = maakSuggestie({ slots: [kassa[0]], kandidaten: [k("vijftien", { geboortedatum: "2011-06-01" })], bestaand: {}, minLeeftijd: { kassa: 16 } });
+    expect(alleenJong.toewijzingen[0].gebruikerId).toBeNull();
+    expect(alleenJong.toewijzingen[0].uitleg).toMatch(/oud genoeg/);
+  });
+
   it("geeft voorrang aan wie onder zijn minimum zit", () => {
     const res = maakSuggestie({ slots: [slots[0]], kandidaten: [k("x"), k("y", { urenMin: 12 })], bestaand: {} });
     expect(res.toewijzingen[0].gebruikerId).toBe("y");

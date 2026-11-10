@@ -8,7 +8,7 @@ import { publiceerWeek } from "@/lib/personeel/acties";
 import { diensten, dienstUren, maandagVan, magPersoneel, normen, planGegevens, posities, vestigingen } from "@/lib/personeel/data";
 import { deadlineVan } from "@/lib/personeel/sjablonen";
 import { controleerDienst, leeftijdOp } from "@/lib/planning/atw";
-import { beschikbaarVoor } from "@/lib/planning/suggestie";
+import { beschikbaarVoor, teJongVoor } from "@/lib/planning/suggestie";
 import { vereisGebruiker } from "@/lib/session";
 import { nuMs } from "@/lib/tijd";
 import { Blok, Kop } from "../beheer-ui";
@@ -43,7 +43,9 @@ export default async function Planning({ searchParams }: PageProps<"/beheer/plan
     const slot = { datum, van: hhmm(d.start), tot: hhmm(d.eind) };
     const andere = [...elders, ...week].filter((x) => x.gebruikerId === k.id && x.id !== d.id).map((x) => ({ start: x.start, eind: x.eind }));
     let reden: string | undefined;
+    const p = pos.find((x) => x.id === d.positieId);
     if (!k.positieIds.includes(d.positieId)) reden = "positie";
+    else if (teJongVoor(k.geboortedatum, datum, p?.minLeeftijd)) reden = `te jong (vanaf ${p?.minLeeftijd})`;
     else if (k.afwezig.has(datum)) reden = "verlof/ziek";
     else if (!beschikbaarVoor(k, slot)) reden = "niet beschikbaar";
     else {
@@ -156,7 +158,7 @@ export default async function Planning({ searchParams }: PageProps<"/beheer/plan
             posities={pos.map((p) => ({ id: p.id, naam: p.naam }))} mensen={kandidaten.map((k) => ({ id: k.id, naam: k.naam }))} />
           <div className="mt-4 space-y-2 text-[13px] text-muted">
             <p className="flex gap-2"><CalendarCheck size={16} className="mt-0.5 shrink-0 text-navy-600" /> <span><b className="text-ink">Rooster voorstellen</b> vult de standaardbezetting van <Link href={`/beheer/vestigingen?v=${v.id}`} className="underline">{v.naam}</Link> met wie beschikbaar is. Eerst wie nog onder zijn minimum contracturen zit; de moeilijkst te vullen diensten gaan voor.</span></p>
-            <p className="flex gap-2"><AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" /> <span>Jongeren onder de 18 worden niet na 23:00 en niet langer dan 9 uur ingepland (onder de 16: niet na 19:00). Tussen twee diensten zit minstens 11 uur rust (jongeren 12).</span></p>
+            <p className="flex gap-2"><AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" /> <span>Jongeren onder de 18 worden niet na 23:00 en niet langer dan 9 uur ingepland (onder de 16: niet na 19:00). Tussen twee diensten zit minstens 11 uur rust (jongeren 12). Per positie geldt een minimumleeftijd: {pos.filter((p) => p.minLeeftijd).map((p) => `${p.naam.toLowerCase()} vanaf ${p.minLeeftijd}`).join(", ")}. Daar kan niemand omheen.</span></p>
             {!norm.length && <p className="font-semibold text-brand-700">Deze vestiging heeft nog geen standaardbezetting. Stel die eerst in.</p>}
           </div>
         </Blok>

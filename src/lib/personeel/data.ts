@@ -279,8 +279,11 @@ export async function passendVoor(gebruikerId: string, lijst: DienstRij[]) {
   const eigen = (await diensten({ gebruikerIds: [gebruikerId], van, tot })).map((d) => ({ start: d.start, eind: d.eind }));
   const afwezig = afwezigheid(verlof, gebruikerId, isoDatum(tot));
   const hhmm = (d: Date) => d.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+  const minLeeftijd = new Map((await posities()).map((p) => [p.id, p.minLeeftijd]));
   return lijst.filter((d) => {
     const datum = d.start.toLocaleDateString("sv-SE");
+    const l = leeftijdOp(m.geboortedatum, datum);
+    if ((minLeeftijd.get(d.positieId) ?? 0) > 0 && (l === null || l < minLeeftijd.get(d.positieId)!)) return false;
     const b = besch.find((x) => x.weekdag === d.start.getDay());
     return pos.some((p) => p.positieId === d.positieId) && !afwezig.has(datum) && !!b && b.van <= hhmm(d.start) && b.tot >= hhmm(d.eind)
       && controleerDienst({ start: d.start, eind: d.eind }, leeftijdOp(m.geboortedatum, datum), eigen).length === 0;

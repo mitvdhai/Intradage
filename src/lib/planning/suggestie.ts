@@ -51,6 +51,13 @@ export function beschikbaarVoor(k: PlanKandidaat, slot: Pick<NormSlot, "datum" |
   return !!b && naarMin(b.van) <= naarMin(slot.van) && naarMin(b.tot) >= naarMin(slot.tot);
 }
 
+/** Is iemand op `datum` jonger dan de minimumleeftijd van de positie? Onbekende geboortedatum telt als te jong als er een grens is. */
+export function teJongVoor(geboortedatum: string | null | undefined, datum: string, min: number | undefined) {
+  if (!min) return false;
+  const l = leeftijdOp(geboortedatum, datum);
+  return l === null || l < min;
+}
+
 /** Simpele, stabiele "toeval" om gelijke kandidaten eerlijk te verdelen. */
 function hash(s: string) { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0; return h; }
 
@@ -59,6 +66,8 @@ export function maakSuggestie(input: {
   kandidaten: PlanKandidaat[];
   /** Al vastgelegde diensten per medewerker (alle vestigingen), telt mee voor uren, rust en overlap */
   bestaand: Record<string, Periode[]>;
+  /** Minimumleeftijd per positie (bijv. kassa vanaf 16). Harde regel: wie te jong is, komt nooit in aanmerking. */
+  minLeeftijd?: Record<string, number>;
 }): Suggestie {
   const planning: Record<string, Periode[]> = {};
   const uren: Record<string, number> = {};
@@ -73,6 +82,7 @@ export function maakSuggestie(input: {
 
   const geschikt = (k: PlanKandidaat, slot: NormSlot) => {
     if (!k.positieIds.includes(slot.positieId) || !beschikbaarVoor(k, slot)) return false;
+    if (teJongVoor(k.geboortedatum, slot.datum, input.minLeeftijd?.[slot.positieId])) return false;
     const p = { start: opTijd(slot.datum, slot.van), eind: opTijd(slot.datum, slot.tot) };
     // Eén dienst per dag per persoon
     if (planning[k.id].some((x) => x.start.toDateString() === p.start.toDateString())) return false;
@@ -94,7 +104,9 @@ export function maakSuggestie(input: {
     const duurMin = naarMin(slot.tot) - naarMin(slot.van);
     if (!opties.length) {
       const metPositie = input.kandidaten.filter((k) => k.positieIds.includes(slot.positieId));
+      const oudGenoeg = metPositie.filter((k) => !teJongVoor(k.geboortedatum, slot.datum, input.minLeeftijd?.[slot.positieId]));
       const uitleg = !metPositie.length ? "Niemand is inzetbaar op deze positie"
+        : !oudGenoeg.length ? `Niemand is oud genoeg voor deze positie (vanaf ${input.minLeeftijd?.[slot.positieId]} jaar)`
         : !metPositie.some((k) => beschikbaarVoor(k, slot)) ? "Niemand met deze positie is dan beschikbaar"
         : "Beschikbare mensen zitten aan hun uren, rusttijd of ATW-grens";
       toewijzingen.push({ slot, gebruikerId: null, pauzeMin: standaardPauze(duurMin, null), uitleg });

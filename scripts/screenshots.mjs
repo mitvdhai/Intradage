@@ -119,4 +119,37 @@ p = await pagina("u-joost", true);
 await foto(p, "/beheer/betrokkenheid", "41-beheer-betrokkenheid");
 await foto(p, "/beheer/evaluaties", "42-beheer-evaluaties");
 
+// Personeelsbeheer
+const maandagNu = (() => { const d = new Date(); d.setHours(12); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.toLocaleDateString("sv-SE"); })();
+const volgendeMa = (() => { const d = new Date(`${maandagNu}T12:00:00`); d.setDate(d.getDate() + 7); return d.toLocaleDateString("sv-SE"); })();
+p = await pagina("u-erik", true);
+await foto(p, `/beheer/planning?v=v-centrum&week=${maandagNu}`, "43-beheer-planning");
+await foto(p, `/beheer/planning?v=v-centrum&week=${volgendeMa}`, "44-beheer-planning-concept");
+await foto(p, "/beheer/vestigingen?v=v-centrum", "45-beheer-vestigingen");
+await foto(p, "/beheer/personeel", "46-beheer-personeel");
+await foto(p, "/beheer/personeel/u-sanne", "47-beheer-dossier");
+await foto(p, "/beheer/personeel/u-sanne/contract/ct-sanne-1", "48-beheer-contract");
+await foto(p, "/beheer/werving", "49-beheer-werving");
+await foto(p, "/beheer/werving/k-4", "50-beheer-kandidaat");
+await foto(p, `/beheer/uren?week=${maandagNu}`, "51-beheer-uren");
+await foto(p, "/beheer/verlof", "52-beheer-verlof");
+p = await pagina("u-sanne");
+await foto(p, "/app/werk", "53-app-rooster");
+await foto(p, "/app/werk/beschikbaarheid", "54-app-beschikbaarheid");
+await foto(p, "/app/werk/verlof", "55-app-verlof");
+await foto(p, "/app/werk/contract/ct-sanne-2", "56-app-contract", async (q) => {
+  await q.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const box = await (await q.$("svg.touch-none")).boundingBox();
+  await q.mouse.move(box.x + 30, box.y + 70); await q.mouse.down();
+  for (const [x, y] of [[60, 30], [90, 75], [130, 25], [170, 70], [220, 40]]) await q.mouse.move(box.x + x, box.y + y, { steps: 5 });
+  await q.mouse.up();
+  await q.click('input[name="akkoord"]');
+});
+await foto(p, "/app/werk/documenten", "57-app-documenten");
+p = await pagina(null);
+await foto(p, "/werken-bij/medewerker-centrum-rotterdam", "58-werken-bij");
+await foto(p, "/start/welkom-lotte", "59-preboarding");
+p = await pagina("u-noor");
+await foto(p, "/app/team", "60-app-team");
+
 await browser.close();
