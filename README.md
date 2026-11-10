@@ -6,7 +6,8 @@ Het interne platform van Bram Ladage: één app voor nieuws, chat, leren, het ha
 
 > **Status: werkend prototype op PostgreSQL.** Alle schermen en flows werken en worden opgeslagen in de database. HorecaManager (Staff) is nog gesimuleerd achter een adapter.
 >
-> - Gebruik en live zetten: [docs/handleiding.md](docs/handleiding.md) (met screenshots)
+> - Handleiding voor gebruikers: [docs/handleiding-gebruikers.pdf](docs/handleiding-gebruikers.pdf) · [docs/handleiding.md](docs/handleiding.md)
+> - Live zetten op Railway: [docs/deploy.md](docs/deploy.md)
 > - Keuzes en het pad naar productie: [docs/architectuur.md](docs/architectuur.md)
 
 ## Starten
@@ -86,7 +87,8 @@ src/
     handboek/                zoeken in passages + assistent met bronvermelding
 drizzle/                     SQL-migraties
 docs/
-  handleiding.md             gebruik per rol + live zetten op Railway (met screenshots)
+  handleiding.md / .pdf      handleiding voor gebruikers, per rol, met screenshots
+  deploy.md                  live zetten op Railway
   architectuur.md            keuzes, productiepad, open punten
   functiehuis.md             rekenregels en spelregels van het functiehuis
   voorstel/                  het voorstel (PDF)
