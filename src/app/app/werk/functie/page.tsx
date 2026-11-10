@@ -2,23 +2,21 @@ import { redirect } from "next/navigation";
 import { Award, BookOpen, ClipboardList, GraduationCap, Target, UserCheck } from "lucide-react";
 import { WerkSegmenten } from "@/components/werk-segmenten";
 import { Kaart, Label, Lijst, PageTop, Rij, Sectie, euro } from "@/components/ui";
-import { functieVan, voornaamVan } from "@/lib/data";
+import { beoordelingen as laadBeoordelingen, functieVan, huidigNiveau, voornaamVan } from "@/lib/data";
 import { CATEGORIEEN, CATEGORIE_LABEL, berekenUitslag } from "@/lib/functiehuis/score";
 import { vereisGebruiker } from "@/lib/session";
-import { db, profielItemMap } from "@/lib/store";
 
 const ICOON = { competentie: Target, vaardigheid: GraduationCap, kennis: Award };
 
 export default async function MijnFunctie() {
-  const u = await vereisGebruiker();
-  const f = functieVan(u);
+  const { u, org } = await vereisGebruiker();
+  const f = functieVan(org, u);
   if (!f) redirect("/app/werk");
-  const items = profielItemMap();
-  const niveau = db.huidigNiveau[u.id] ?? {};
-  const beoordelingen = db.beoordelingen.filter((b) => b.gebruikerId === u.id).sort((a, b) => b.periode.localeCompare(a.periode));
+  const items = org.itemMap;
+  const [niveau, beoordelingen] = await Promise.all([huidigNiveau(u.id), laadBeoordelingen({ gebruikerIds: [u.id] })]);
   const lopend = beoordelingen.find((b) => b.status !== "besloten");
   const laatste = beoordelingen.find((b) => b.status === "besloten");
-  const uitslagLaatste = laatste ? berekenUitslag(f, items, laatste.beoordelaar, db.regeling) : null;
+  const uitslagLaatste = laatste ? berekenUitslag(f, items, laatste.beoordelaar, org.regeling) : null;
 
   return (
     <>
@@ -72,7 +70,7 @@ export default async function MijnFunctie() {
           {lopend && (
             lopend.status === "zelfbeoordeling"
               ? <Rij href="/app/werk/functie/zelfbeoordeling" toon="rood" icoon={<UserCheck size={18} />} titel={`Zelfbeoordeling ${lopend.periode}`} sub="Vul eerst zelf in hoe je ervoor staat" />
-              : <Rij icoon={<ClipboardList size={18} />} titel={`Beoordeling ${lopend.periode}`} sub={`${lopend.status === "gesprek" ? "Klaar voor het gesprek" : "Wordt ingevuld"} door ${voornaamVan(lopend.beoordelaarId)}`} />
+              : <Rij icoon={<ClipboardList size={18} />} titel={`Beoordeling ${lopend.periode}`} sub={`${lopend.status === "gesprek" ? "Klaar voor het gesprek" : "Wordt ingevuld"} door ${voornaamVan(org, lopend.beoordelaarId)}`} />
           )}
           {laatste && uitslagLaatste && (
             <Rij icoon={<Award size={18} />} toon="groen" titel={`Beoordeling ${laatste.periode}: ${uitslagLaatste.uitkomst}`}

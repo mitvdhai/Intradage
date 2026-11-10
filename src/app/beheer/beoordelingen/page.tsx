@@ -1,26 +1,23 @@
 import Link from "next/link";
 import { euro } from "@/components/ui";
 import { isHQ, scopeVestigingen } from "@/lib/access";
-import { naamVan, vestigingNaam, voornaamVan } from "@/lib/data";
+import { beoordelingen, naamVan, vestigingNaam, voornaamVan } from "@/lib/data";
 import { berekenUitslag } from "@/lib/functiehuis/score";
 import { vereisGebruiker } from "@/lib/session";
-import { db, profielItemMap } from "@/lib/store";
 import type { Uitkomst } from "@/lib/types";
 import { Blok, Kop, Tabel } from "../beheer-ui";
 
 const UITKOMSTEN: Uitkomst[] = ["onvoldoende", "matig", "goed", "zeer goed", "uitstekend"];
 
 export default async function Beoordelingen() {
-  const u = await vereisGebruiker();
-  const scope = new Set(scopeVestigingen(u));
-  const items = profielItemMap();
-  const rijen = db.beoordelingen
-    .map((b) => {
-      const m = db.gebruikers.find((g) => g.id === b.gebruikerId)!;
-      const f = db.functies.find((x) => x.id === b.functieId)!;
-      return { b, m, f, uitslag: berekenUitslag(f, items, b.beoordelaar, db.regeling) };
-    })
-    .filter(({ m }) => m.vestigingIds.some((v) => scope.has(v)));
+  const { u, org } = await vereisGebruiker();
+  const scope = new Set(scopeVestigingen(org, u));
+  const inScope = org.gebruikers.filter((g) => g.vestigingIds.some((v) => scope.has(v)));
+  const rijen = (await beoordelingen({ gebruikerIds: inScope.map((g) => g.id) })).map((b) => {
+    const m = org.gebruikers.find((g) => g.id === b.gebruikerId)!;
+    const f = org.functies.find((x) => x.id === b.functieId)!;
+    return { b, m, f, uitslag: berekenUitslag(f, org.itemMap, b.beoordelaar, org.regeling) };
+  });
   const verdeling = UITKOMSTEN.map((x) => ({ x, n: rijen.filter((r) => r.uitslag.uitkomst === x).length }));
   const max = Math.max(1, ...verdeling.map((v) => v.n));
   // HQ ziet geen individuele salarissen, alleen of er een besluit is (dataminimalisatie)
@@ -34,9 +31,9 @@ export default async function Beoordelingen() {
           <Tabel kop={["Medewerker", "Functie", "Beoordelaar", "Status", "Score", "Uitkomst", toonSalaris ? "Besluit" : ""]}>
             {rijen.map(({ b, m, f, uitslag }) => (
               <tr key={b.id}>
-                <td className="px-3 py-2.5"><div className="font-medium">{naamVan(m.id)}</div><div className="text-[12px] text-muted">{vestigingNaam(m.vestigingIds[0])}</div></td>
+                <td className="px-3 py-2.5"><div className="font-medium">{naamVan(org, m.id)}</div><div className="text-[12px] text-muted">{vestigingNaam(org, m.vestigingIds[0])}</div></td>
                 <td className="px-3 py-2.5">{f.naam}</td>
-                <td className="px-3 py-2.5">{voornaamVan(b.beoordelaarId)}</td>
+                <td className="px-3 py-2.5">{voornaamVan(org, b.beoordelaarId)}</td>
                 <td className="px-3 py-2.5 capitalize">{b.status}</td>
                 <td className="px-3 py-2.5 font-semibold">{uitslag.totaal?.toFixed(2).replace(".", ",") ?? "–"}</td>
                 <td className="px-3 py-2.5 capitalize">{uitslag.uitkomst ?? "–"}</td>

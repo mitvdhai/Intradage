@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 // Cache Components staat (nog) uit: vrijwel elke pagina is persoonsgebonden.
 // Zie docs/architectuur.md voor wanneer we dit aanzetten.
 const nextConfig: NextConfig = {
+  // Database-drivers niet bundelen (native/wasm-bestanden)
+  serverExternalPackages: ["@electric-sql/pglite", "pg"],
   turbopack: {
     rules: {
       "*.css": {

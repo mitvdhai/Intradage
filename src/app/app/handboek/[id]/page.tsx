@@ -5,8 +5,8 @@ import { vereisGebruiker } from "@/lib/session";
 
 export default async function Document({ params }: PageProps<"/app/handboek/[id]">) {
   const { id } = await params;
-  const u = await vereisGebruiker();
-  const d = handboekVoor(u).find((x) => x.id === id);
+  const { u, org } = await vereisGebruiker();
+  const d = (await handboekVoor(org, u)).find((x) => x.id === id);
   if (!d) notFound();
   const blokken = d.inhoud.split(/^## /m).filter(Boolean).map((b) => { const [kop, ...r] = b.split("\n"); return { kop: kop.trim(), tekst: r.join("\n").trim() }; });
   return (

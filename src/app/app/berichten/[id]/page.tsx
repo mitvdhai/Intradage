@@ -3,23 +3,19 @@ import { CheckCircle2, FileText, Pin } from "lucide-react";
 import { Knop, Label, Lijst, PageTop, Rij, Sectie, tijdLabel } from "@/components/ui";
 import { inDoelgroep } from "@/lib/access";
 import { bevestigBericht, reageer } from "@/lib/acties";
-import { afzenderLabel, isBevestigd, reactiesVan, status, voornaamVan } from "@/lib/data";
+import { afzenderLabel, bericht, leesStatus, markeerGelezen, reactiesVan, voornaamVan } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
-import { db } from "@/lib/store";
+import { alleHandboekDocs } from "@/lib/data";
 
 export default async function BerichtPagina({ params }: PageProps<"/app/berichten/[id]">) {
   const { id } = await params;
-  const u = await vereisGebruiker();
-  const b = db.berichten.find((x) => x.id === id);
-  if (!b || !inDoelgroep(u, b.doelgroep)) notFound();
-
-  // Openen = gelezen (bevestigen is een aparte, bewuste actie)
-  db.leesstatus[b.id] ??= {};
-  (db.leesstatus[b.id][u.id] ??= {}).gelezen ??= new Date().toISOString();
-
-  const doc = b.handboekDocId ? db.handboek.find((d) => d.id === b.handboekDocId) : undefined;
-  const reacties = reactiesVan(b.id);
-  const bevestigd = isBevestigd(b, u);
+  const { u, org } = await vereisGebruiker();
+  const b = await bericht(id);
+  if (!b || !inDoelgroep(org, u, b.doelgroep)) notFound();
+  await markeerGelezen(b.id, u.id);
+  const [status, reacties, docs] = await Promise.all([leesStatus(b.id, u.id), reactiesVan(b.id), alleHandboekDocs()]);
+  const doc = b.handboekDocId ? docs.find((d) => d.id === b.handboekDocId) : undefined;
+  const bevestigd = b.urgentie !== "verplicht" || !!status.bevestigd;
   const regels = b.inhoud.split("\n");
 
   return (
@@ -49,7 +45,7 @@ export default async function BerichtPagina({ params }: PageProps<"/app/berichte
         <div className="px-4 pt-5">
           {bevestigd ? (
             <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-              <CheckCircle2 size={18} /> Bevestigd op {new Date(status(b, u).bevestigd!).toLocaleString("nl-NL", { dateStyle: "medium", timeStyle: "short" })}
+              <CheckCircle2 size={18} /> Bevestigd op {new Date(status.bevestigd!).toLocaleString("nl-NL", { dateStyle: "medium", timeStyle: "short" })}
             </div>
           ) : (
             <form action={bevestigBericht.bind(null, b.id)}><Knop><CheckCircle2 size={18} /> Gelezen en begrepen</Knop></form>
@@ -61,7 +57,7 @@ export default async function BerichtPagina({ params }: PageProps<"/app/berichte
         <div className="space-y-2">
           {reacties.map((r) => (
             <div key={r.id} className="rounded-2xl bg-white px-4 py-2.5 text-[14px] ring-1 ring-line">
-              <div className="text-[12px] font-semibold text-navy-700">{voornaamVan(r.gebruikerId)} <span className="font-normal text-muted">· {tijdLabel(r.tijd)}</span></div>
+              <div className="text-[12px] font-semibold text-navy-700">{voornaamVan(org, r.gebruikerId)} <span className="font-normal text-muted">· {tijdLabel(r.tijd)}</span></div>
               {r.tekst}
             </div>
           ))}

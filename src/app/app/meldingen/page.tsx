@@ -1,19 +1,18 @@
 import { Cake, CheckCircle2, ClipboardCheck, GraduationCap, Repeat, Star, UserCheck } from "lucide-react";
 import { Leeg, Lijst, PageTop, Rij, Sectie, Segmenten, tijdLabel } from "@/components/ui";
-import { teDoen, verjaardagenBinnenkort, voornaamVan } from "@/lib/data";
+import { feedbackVoor, leerItemsVoor, ruilverzoeken, teDoen, verjaardagenBinnenkort, voornaamVan } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
-import { db } from "@/lib/store";
 
 const ICOON = { bericht: CheckCircle2, leren: GraduationCap, beoordelen: ClipboardCheck, ruil: Repeat, zelfbeoordeling: UserCheck };
 
 export default async function Meldingen({ searchParams }: PageProps<"/app/meldingen">) {
   const { filter } = await searchParams;
   const alleenVerplicht = filter === "verplicht";
-  const u = await vereisGebruiker();
-  const taken = teDoen(u).filter((t) => !alleenVerplicht || t.urgent);
-  const feedback = db.voortgang.filter((v) => v.gebruikerId === u.id && v.beoordeeldDoor);
-  const ruil = db.ruilverzoeken.filter((r) => (r.aangebodenDoor === u.id || r.overgenomenDoor === u.id) && r.status !== "open");
-  const jarig = verjaardagenBinnenkort(u).filter((j) => j.g.id !== u.id);
+  const { u, org } = await vereisGebruiker();
+  const [alleTaken, feedback, ruilen, items] = await Promise.all([teDoen(org, u), feedbackVoor(u.id), ruilverzoeken(), leerItemsVoor(u)]);
+  const taken = alleTaken.filter((t) => !alleenVerplicht || t.urgent);
+  const ruil = ruilen.filter((r) => (r.aangebodenDoor === u.id || r.overgenomenDoor === u.id) && r.status !== "open");
+  const jarig = verjaardagenBinnenkort(org, u).filter((j) => j.g.id !== u.id);
 
   return (
     <>
@@ -30,8 +29,8 @@ export default async function Meldingen({ searchParams }: PageProps<"/app/meldin
         <Sectie titel="Ter info">
           <Lijst>
             {feedback.map((v) => {
-              const item = db.leeritems.find((i) => i.id === v.itemId);
-              return <Rij key={v.itemId} href={`/app/leren/${v.itemId}`} icoon={<Star size={18} />} titel={`${item?.titel}: ${v.status === "afgerond" ? "goedgekeurd" : "nog niet goed"}`} sub={`${voornaamVan(v.beoordeeldDoor!)} · ${tijdLabel(v.tijd)}${v.feedback ? ` · "${v.feedback}"` : ""}`} />;
+              const item = items.find((i) => i.id === v.itemId);
+              return <Rij key={v.itemId} href={`/app/leren/${v.itemId}`} icoon={<Star size={18} />} titel={`${item?.titel}: ${v.status === "afgerond" ? "goedgekeurd" : "nog niet goed"}`} sub={`${voornaamVan(org, v.beoordeeldDoor!)} · ${tijdLabel(v.tijd)}${v.feedback ? ` · "${v.feedback}"` : ""}`} />;
             })}
             {ruil.map((r) => <Rij key={r.id} icoon={<Repeat size={18} />} titel={`Ruil ${r.status === "goedgekeurd" ? "goedgekeurd" : r.status === "afgewezen" ? "afgewezen" : "wacht op akkoord"}`} sub="Wordt verwerkt in je rooster" />)}
             {jarig.map(({ g, dt }) => <Rij key={g.id} icoon={<Cake size={18} />} titel={`${g.voornaam} is jarig`} sub={dt.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })} />)}

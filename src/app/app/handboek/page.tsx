@@ -5,8 +5,8 @@ import { handboekVoor } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
 
 export default async function Handboek() {
-  const u = await vereisGebruiker();
-  const docs = handboekVoor(u).sort((a, b) => b.bijgewerkt.localeCompare(a.bijgewerkt));
+  const { u, org } = await vereisGebruiker();
+  const docs = (await handboekVoor(org, u)).sort((a, b) => b.bijgewerkt.localeCompare(a.bijgewerkt));
   return (
     <>
       <PageTop titel="Handboek" sub="Antwoorden komen alleen uit onze eigen documenten" />

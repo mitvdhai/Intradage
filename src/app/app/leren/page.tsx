@@ -6,17 +6,17 @@ import { vereisGebruiker } from "@/lib/session";
 
 export default async function Leren({ searchParams }: PageProps<"/app/leren">) {
   const { tab = "voor-jou" } = await searchParams;
-  const u = await vereisGebruiker();
-  const items = leerItemsVoor(u);
-  const ob = onboarding(u);
-  const status = (id: string) => voortgangVan(u.id, id)?.status;
+  const { u, org } = await vereisGebruiker();
+  const [items, vg] = await Promise.all([leerItemsVoor(u), voortgangVan(u.id)]);
+  const ob = await onboarding(u, items, vg);
+  const status = (id: string) => vg.get(id)?.status;
   const open = items.filter((i) => status(i.id) !== "afgerond");
   const klaar = items.filter((i) => status(i.id) === "afgerond");
   const deadline = new Date(new Date(u.inDienstSinds).getTime() + 42 * 86400000);
 
   return (
     <>
-      <PageTop titel="Leren" sub={functieVan(u)?.naam ?? "Voor jouw rol"} />
+      <PageTop titel="Leren" sub={functieVan(org, u)?.naam ?? "Voor jouw rol"} />
       <Segmenten actief={tab === "afgerond" ? "Afgerond" : "Voor jou"} items={[{ label: "Voor jou", href: "/app/leren" }, { label: "Afgerond", href: "/app/leren?tab=afgerond" }]} />
 
       {tab !== "afgerond" ? (

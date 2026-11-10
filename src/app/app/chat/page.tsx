@@ -1,25 +1,26 @@
 import { Megaphone, Store, Users, UsersRound } from "lucide-react";
 import { Lijst, PageTop, Rij, Sectie, tijdLabel } from "@/components/ui";
-import { chatGroepenVoor, chatVan, ledenVan, voornaamVan } from "@/lib/data";
+import { chatGroepenVoor, laatsteChats, ledenVan, voornaamVan } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
 
 const ICOON = { vestiging: Store, franchisenemer: UsersRound, shiftleiders: Users, "hq-kanaal": Megaphone };
 
 export default async function Chats() {
-  const u = await vereisGebruiker();
-  const groepen = chatGroepenVoor(u);
+  const { u, org } = await vereisGebruiker();
+  const groepen = await chatGroepenVoor(org, u);
+  const laatste = await laatsteChats(groepen.map((g) => g.id));
   return (
     <>
       <PageTop titel="Chat" sub="Groepen worden automatisch bijgewerkt vanuit HorecaManager" />
       <Sectie>
         <Lijst>
           {groepen.map((g) => {
-            const laatste = chatVan(g.id).at(-1);
+            const l = laatste.get(g.id);
             const I = ICOON[g.type];
             return (
               <Rij key={g.id} href={`/app/chat/${g.id}`} icoon={<I size={18} />} toon={g.alleenLezen ? "grijs" : "navy"} titel={g.naam}
-                sub={laatste ? `${voornaamVan(laatste.gebruikerId)}: ${laatste.tekst}` : `${ledenVan(g).length} leden`}
-                rechts={laatste ? <span className="shrink-0 text-[11px] text-muted">{tijdLabel(laatste.tijd)}</span> : undefined} />
+                sub={l ? `${voornaamVan(org, l.gebruikerId)}: ${l.tekst}` : `${ledenVan(org, g).length} leden`}
+                rechts={l ? <span className="shrink-0 text-[11px] text-muted">{tijdLabel(l.tijd)}</span> : undefined} />
             );
           })}
         </Lijst>

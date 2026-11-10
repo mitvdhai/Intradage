@@ -6,8 +6,8 @@ import { teDoen } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
 
 export default async function AppLayout({ children }: LayoutProps<"/app">) {
-  const u = await vereisGebruiker();
-  const open = teDoen(u).length;
+  const { u, org } = await vereisGebruiker();
+  const open = (await teDoen(org, u)).length;
   const tabs: { href: string; label: string; icoon: TabIcoon; badge?: number }[] = [
     { href: "/app", label: "Home", icoon: "home", badge: open },
     { href: "/app/chat", label: "Chat", icoon: "chat" },

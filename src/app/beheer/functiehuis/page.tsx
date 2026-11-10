@@ -3,15 +3,14 @@ import { FunctieprofielEditor } from "@/components/functieprofiel-editor";
 import { cx } from "@/components/ui";
 import { isHQ } from "@/lib/access";
 import { vereisGebruiker } from "@/lib/session";
-import { db } from "@/lib/store";
 import { Blok, Kop } from "../beheer-ui";
 
 export default async function Functiehuis({ searchParams }: PageProps<"/beheer/functiehuis">) {
   const { f } = await searchParams;
-  const u = await vereisGebruiker();
-  const functies = [...db.functies].sort((a, b) => a.trede - b.trede);
+  const { u, org } = await vereisGebruiker();
+  const functies = [...org.functies].sort((a, b) => a.trede - b.trede);
   const actief = functies.find((x) => x.id === f) ?? functies[0];
-  const bezetting = (id: string) => db.gebruikers.filter((g) => g.functieId === id).length;
+  const bezetting = (id: string) => org.gebruikers.filter((g) => g.functieId === id).length;
 
   return (
     <>
@@ -41,7 +40,7 @@ export default async function Functiehuis({ searchParams }: PageProps<"/beheer/f
             </div>
           </Blok>
           <Blok titel="Profiel en weging" rechts={!isHQ(u) ? <span className="text-[12px] text-muted">alleen HQ kan wijzigen</span> : undefined}>
-            <FunctieprofielEditor key={actief.id} functie={actief} items={db.profielItems} magBewerken={isHQ(u)} />
+            <FunctieprofielEditor key={actief.id} functie={actief} items={org.profielItems} magBewerken={isHQ(u)} />
           </Blok>
         </div>
       </div>
