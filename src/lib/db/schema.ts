@@ -622,3 +622,22 @@ export const lifecycleTaak = pgTable("lifecycle_taak", {
   klaar: ts("klaar"),
   klaarDoor: text("klaar_door").references(() => gebruiker.id),
 }, (t) => [unique("lifecycle_uniek").on(t.gebruikerId, t.fase, t.sleutel)]);
+
+// ---------- Rollen en rechten ----------
+
+/** Niveau per rol en module (0 geen, 1 bekijken, 2 beheren). Ontbrekend = standaard uit de code. */
+export const rolRecht = pgTable("rol_recht", {
+  rol: rolEnum("rol").notNull(),
+  module: text("module").notNull(),
+  niveau: smallint("niveau").notNull(),
+}, (t) => [primaryKey({ columns: [t.rol, t.module] }), check("rol_recht_niveau", sql`${t.niveau} between 0 and 2`)]);
+
+/** Uitzondering voor één persoon (meer of juist minder dan de rol). */
+export const persoonRecht = pgTable("persoon_recht", {
+  gebruikerId: text("gebruiker_id").notNull().references(() => gebruiker.id, { onDelete: "cascade" }),
+  module: text("module").notNull(),
+  niveau: smallint("niveau").notNull(),
+  door: text("door").references(() => gebruiker.id),
+  reden: text("reden"),
+  tijd: ts("tijd").notNull().defaultNow(),
+}, (t) => [primaryKey({ columns: [t.gebruikerId, t.module] }), check("persoon_recht_niveau", sql`${t.niveau} between 0 and 2`)]);

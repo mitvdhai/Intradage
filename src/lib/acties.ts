@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq, ne } from "drizzle-orm";
-import { inDoelgroep, isHQ, isLeiding, magBeheer, magMedewerkerZien, scopeVestigingen } from "./access";
+import { inDoelgroep, isHQ, isLeiding, mag, magMedewerkerZien, scopeVestigingen } from "./access";
 import { audit } from "./audit";
 import { beoordelingen, bericht as leesBericht, chatGroepenVoor, handboekVoor, leerItem, salarisVan } from "./data";
 import { getDb } from "./db/client";
@@ -64,7 +64,7 @@ export async function reageer(berichtId: string, formData: FormData) {
 
 export async function verstuurBericht(_: unknown, formData: FormData): Promise<{ fout?: string; ok?: boolean }> {
   const { u, org } = await vereisGebruiker();
-  if (!magBeheer(u)) return { fout: "Geen rechten om berichten te versturen." };
+  if (!mag(org, u, "berichten")) return { fout: "Geen rechten om berichten te versturen." };
   const titel = tekst(formData, "titel");
   const inhoud = tekst(formData, "inhoud");
   if (!titel || !inhoud) return { fout: "Vul een titel en tekst in." };
@@ -131,7 +131,7 @@ export async function beslisRuil(ruilId: string, akkoord: boolean) {
   const { u, org } = await vereisGebruiker();
   const db = await getDb();
   const [r] = await db.select().from(t.ruilverzoek).where(eq(t.ruilverzoek.id, ruilId));
-  if (!r || r.status !== "wacht-op-akkoord" || !isLeiding(u) || !magMedewerkerZien(org, u, r.aangebodenDoor)) return;
+  if (!r || r.status !== "wacht-op-akkoord" || !(isLeiding(u) || mag(org, u, "planning")) || !magMedewerkerZien(org, u, r.aangebodenDoor)) return;
   await db.update(t.ruilverzoek).set({ status: akkoord ? "goedgekeurd" : "afgewezen" }).where(eq(t.ruilverzoek.id, ruilId));
   // De ruil direct in het rooster verwerken
   if (akkoord && r.overgenomenDoor) await db.update(t.dienst).set({ gebruikerId: r.overgenomenDoor }).where(and(eq(t.dienst.id, r.dienstId), eq(t.dienst.gebruikerId, r.aangebodenDoor)));
@@ -175,7 +175,7 @@ export async function dienChallengeIn(itemId: string, formData: FormData) {
 
 export async function beoordeelInzending(gebruikerId: string, itemId: string, formData: FormData) {
   const { u, org } = await vereisGebruiker();
-  if (!isLeiding(u) || !magMedewerkerZien(org, u, gebruikerId)) return;
+  if (!mag(org, u, "beoordelingen") || !magMedewerkerZien(org, u, gebruikerId)) return;
   const akkoord = formData.get("akkoord") === "ja";
   await zetVoortgang(gebruikerId, itemId, { status: akkoord ? "afgerond" : "afgekeurd", feedback: tekst(formData, "feedback") || null, beoordeeldDoor: u.id });
   revalidatePath("/app", "layout");
@@ -315,7 +315,7 @@ export async function legBesluitVast(beoordelingId: string, _: unknown, formData
 
 export async function slaFunctieprofielOp(functieId: string, _: unknown, formData: FormData): Promise<{ fout?: string; ok?: boolean }> {
   const { u, org } = await vereisGebruiker();
-  if (!isHQ(u)) return { fout: "Alleen HQ beheert het functiehuis." };
+  if (!mag(org, u, "functiehuis")) return { fout: "Je hebt geen rechten om het functiehuis te wijzigen." };
   const f = org.functies.find((x) => x.id === functieId);
   if (!f) return { fout: "Functie niet gevonden." };
   const kandidaat = structuredClone(f);
@@ -341,7 +341,7 @@ export async function slaFunctieprofielOp(functieId: string, _: unknown, formDat
 
 export async function slaRegelingOp(_: unknown, formData: FormData): Promise<{ fout?: string; ok?: boolean }> {
   const { u, org } = await vereisGebruiker();
-  if (!isHQ(u) || u.discipline !== "hr") return { fout: "Alleen HQ HR beheert de beloningsregeling." };
+  if (!mag(org, u, "regeling")) return { fout: "Je hebt geen rechten om de beloningsregeling te wijzigen." };
   const r = structuredClone(org.regeling);
   for (const b of r.banden) {
     const vanaf = getal(formData, `vanaf-${b.uitkomst}`);

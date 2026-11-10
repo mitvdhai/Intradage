@@ -1,4 +1,5 @@
 import type { Org } from "./org";
+import { MODULES, niveauVan, type Module, type Niveau } from "./rechten";
 import type { Doelgroep, Gebruiker, Rol } from "./types";
 
 // Rechtenmodel: rol (wat mag je) × scope (over welk deel van de organisatie).
@@ -8,6 +9,13 @@ import type { Doelgroep, Gebruiker, Rol } from "./types";
 export const isLeiding = (u: Gebruiker) => u.rol === "franchisenemer" || u.rol === "manager";
 export const isHQ = (u: Gebruiker) => u.rol === "hq";
 export const magBeheer = (u: Gebruiker) => isHQ(u) || u.rol === "franchisenemer";
+
+/** Mag deze gebruiker deze module bekijken (1) of beheren (2)? Rol × module, met uitzonderingen per persoon. */
+export function mag(org: Pick<Org, "rechten">, u: Gebruiker, module: Module, niveau: Niveau = 2) {
+  return niveauVan(org.rechten, u, module) >= niveau;
+}
+/** Heeft deze gebruiker toegang tot de beheeromgeving (minstens één module bekijken)? */
+export const heeftBeheer = (org: Pick<Org, "rechten">, u: Gebruiker) => MODULES.some((m) => mag(org, u, m.id, 1));
 
 /** Vestigingen binnen de scope van deze gebruiker. */
 export function scopeVestigingen(org: Org, u: Gebruiker): string[] {

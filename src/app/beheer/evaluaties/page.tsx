@@ -1,5 +1,6 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { scopeVestigingen } from "@/lib/access";
+import { scopeVestigingen, mag } from "@/lib/access";
 import { actiepunten, uitvoeringen } from "@/lib/betrokkenheid";
 import { vestigingNaam, voornaamVan } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
@@ -15,6 +16,7 @@ function Cijfer({ v, ko }: { v: number | null | undefined; ko?: boolean }) {
 
 export default async function BeheerEvaluaties() {
   const { u, org } = await vereisGebruiker();
+  if (!mag(org, u, "evaluaties", 1)) redirect("/beheer");
   const scope = scopeVestigingen(org, u);
   const vandaag = new Date(); vandaag.setHours(0, 0, 0, 0);
   const [evals, dag, acties] = await Promise.all([

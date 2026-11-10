@@ -2,15 +2,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cx } from "@/components/ui";
 import { VestigingEditor } from "@/components/vestiging-editor";
-import { scopeVestigingen } from "@/lib/access";
-import { magPersoneel, medewerkers, normen, posities, vestigingen } from "@/lib/personeel/data";
+import { scopeVestigingen, mag } from "@/lib/access";
+import { medewerkers, normen, posities, vestigingen } from "@/lib/personeel/data";
 import { vereisGebruiker } from "@/lib/session";
 import { Blok, Kop } from "../beheer-ui";
 
 export default async function Vestigingen({ searchParams }: PageProps<"/beheer/vestigingen">) {
   const { v: kies } = await searchParams;
   const { u, org } = await vereisGebruiker();
-  if (!magPersoneel(u)) redirect("/beheer");
+  if (!mag(org, u, "vestigingen", 1)) redirect("/beheer");
   const vest = await vestigingen(scopeVestigingen(org, u));
   const v = vest.find((x) => x.id === kies) ?? vest[0];
   if (!v) return <Kop titel="Vestigingen" sub="Geen vestigingen in je scope." />;
@@ -25,7 +25,7 @@ export default async function Vestigingen({ searchParams }: PageProps<"/beheer/v
       </div>
       <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
         <Blok titel={`${v.naam} · ${v.adres ?? v.plaats}`}>
-          <VestigingEditor key={v.id} vestigingId={v.id} opening={v.openingstijden} normen={norm.map((n) => ({ weekdag: n.weekdag, positieId: n.positieId, aantal: n.aantal, van: n.van, tot: n.tot }))} posities={pos} />
+          {mag(org, u, "vestigingen") ? <VestigingEditor key={v.id} vestigingId={v.id} opening={v.openingstijden} normen={norm.map((n) => ({ weekdag: n.weekdag, positieId: n.positieId, aantal: n.aantal, van: n.van, tot: n.tot }))} posities={pos} /> : <p className="text-sm text-muted">Je kunt de bezetting bekijken via Planning; wijzigen vraagt beheerrechten voor Vestigingen.</p>}
         </Blok>
         <div className="space-y-6">
           <Blok titel={`Team (${team.length})`}>

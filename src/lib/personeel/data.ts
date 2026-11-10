@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, desc, eq, gte, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
-import { isHQ, isLeiding, scopeVestigingen } from "../access";
+import { isHQ, mag, scopeVestigingen } from "../access";
+import type { Module, Niveau } from "../rechten";
 import { getDb } from "../db/client";
 import * as t from "../db/schema";
 import type { Org } from "../org";
@@ -16,7 +17,7 @@ export type Verlof = typeof t.verlof.$inferSelect;
 export type Klok = typeof t.klok.$inferSelect;
 export type Medewerker = typeof t.gebruiker.$inferSelect & { vestigingIds: string[] };
 
-export const magPersoneel = (u: Gebruiker) => isHQ(u) || isLeiding(u);
+
 export const vandaagIso = () => isoDatum(new Date());
 export const maandagVan = (d = new Date()) => isoDatum(weekStart(d));
 
@@ -60,9 +61,9 @@ export async function medewerker(id: string): Promise<Medewerker | undefined> {
 }
 
 /** Mag `u` het dossier van medewerker `m` beheren? Alleen leiding en HQ, binnen hun vestigingen. */
-export function magDossier(org: Org, u: Gebruiker, m: Pick<Medewerker, "vestigingIds" | "id">) {
+export function magDossier(org: Org, u: Gebruiker, m: Pick<Medewerker, "vestigingIds" | "id">, module: Module = "medewerkers", niveau: Niveau = 1) {
+  if (!mag(org, u, module, niveau) || u.id === m.id) return false;
   if (isHQ(u)) return true;
-  if (!isLeiding(u) || u.id === m.id) return false;
   const scope = new Set(scopeVestigingen(org, u));
   return m.vestigingIds.some((v) => scope.has(v));
 }
@@ -174,7 +175,7 @@ export function periodesPerPersoon(lijst: DienstRij[], behalve = new Set<string>
 export interface Signaal { soort: "contract" | "keten" | "certificaat" | "preboarding" | "offboarding" | "verlof" | "uren" | "teken"; gebruikerId?: string; tekst: string; urgent: boolean; href: string }
 
 export async function signalen(org: Org, u: Gebruiker): Promise<Signaal[]> {
-  if (!magPersoneel(u)) return [];
+  if (!mag(org, u, "medewerkers", 1)) return [];
   const db = await getDb();
   const mensen = await medewerkers(org, u);
   const ids = mensen.map((m) => m.id);
@@ -304,9 +305,7 @@ export async function urenInTeVullen(gebruikerId: string) {
 
 /** Vestigingen waarvan deze gebruiker uren mag bevestigen. */
 export function bevestigVestigingen(org: Org, u: Gebruiker) {
-  if (isHQ(u) || isLeiding(u)) return scopeVestigingen(org, u);
-  if (u.rol === "shiftleider") return u.vestigingIds;
-  return [];
+  return mag(org, u, "uren") ? scopeVestigingen(org, u) : [];
 }
 
 /** Ingediende urenregels die deze gebruiker mag bevestigen (nooit de eigen). */

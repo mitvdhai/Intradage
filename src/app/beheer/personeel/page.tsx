@@ -2,8 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, Bell, UserPlus } from "lucide-react";
 import { cx } from "@/components/ui";
-import { ROL_LABEL } from "@/lib/access";
-import { contractenVan, geldendContract, magPersoneel, medewerkers, signalen, vandaagIso } from "@/lib/personeel/data";
+import { ROL_LABEL, mag } from "@/lib/access";
+import { contractenVan, geldendContract, medewerkers, signalen, vandaagIso } from "@/lib/personeel/data";
 import { leeftijdOp } from "@/lib/planning/atw";
 import { vereisGebruiker } from "@/lib/session";
 import { Blok, Kop, Kpi, Tabel } from "../beheer-ui";
@@ -14,7 +14,7 @@ const datum = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("n
 export default async function Personeel({ searchParams }: PageProps<"/beheer/personeel">) {
   const { filter = "actief" } = await searchParams;
   const { u, org } = await vereisGebruiker();
-  if (!magPersoneel(u)) redirect("/beheer");
+  if (!mag(org, u, "medewerkers", 1)) redirect("/beheer");
   const [alle, sig] = await Promise.all([medewerkers(org, u, { metUitDienst: true }), signalen(org, u)]);
   const contracten = await contractenVan(alle.map((m) => m.id));
   const vandaag = vandaagIso();
@@ -26,7 +26,7 @@ export default async function Personeel({ searchParams }: PageProps<"/beheer/per
   return (
     <>
       <Kop titel="Medewerkers" sub="Personeelsdossier, contracten en de hele levenscyclus: van sollicitatie tot uit dienst"
-        rechts={<Link href="/beheer/werving" className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-semibold text-white"><UserPlus size={16} /> Nieuwe medewerker via werving</Link>} />
+        rechts={mag(org, u, "medewerkers") ? <div className="flex gap-2"><Link href="/beheer/werving" className="inline-flex items-center gap-2 rounded-lg bg-white px-3.5 py-2 text-sm font-semibold ring-1 ring-line">Via werving</Link><Link href="/beheer/personeel/nieuw" className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-semibold text-white"><UserPlus size={16} /> Medewerker toevoegen</Link></div> : undefined} />
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi waarde={String(tel("actief"))} label="in dienst" />
         <Kpi waarde={String(tel("preboarding"))} label="starten binnenkort (preboarding)" />

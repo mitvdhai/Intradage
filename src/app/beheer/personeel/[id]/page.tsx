@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, Circle, Download, FileSignature, FileText, Link2, Trash2 } from "lucide-react";
 import { ActieForm } from "@/components/actie-form";
 import { cx } from "@/components/ui";
-import { ROL_LABEL, scopeVestigingen } from "@/lib/access";
+import { mag, ROL_LABEL, scopeVestigingen } from "@/lib/access";
 import { maakContract, meldUitDienst, slaDossierOp, uploadDocument, verwijderDocument, vinkTaakAf } from "@/lib/personeel/acties";
 import {
   beschikbaarheidVan, contractenVan, dossierVan, geldendContract, klokVan, lifecycleVan, magDossier, medewerker, nettoUren, positiesVan, posities, vandaagIso, verlofSaldo, verlofVan,
@@ -37,6 +37,8 @@ export default async function Dossier({ params, searchParams }: PageProps<"/behe
   const huidig = geldendContract(contracten, id);
   const keten = ketenSignaal(contracten);
   const scope = scopeVestigingen(org, u);
+  const kan = mag(org, u, "medewerkers");
+  const kanContract = mag(org, u, "contracten");
   const pg = m.persoonsgegevens;
   const functie = org.functies.find((f) => f.id === m.functieId);
   const startLink = m.status === "preboarding" && m.uitnodigingToken ? `/start/${m.uitnodigingToken}` : null;
@@ -96,7 +98,7 @@ export default async function Dossier({ params, searchParams }: PageProps<"/behe
           )}
 
           <Blok titel="Inzet: vestigingen, posities en beschikbaarheid">
-            <ActieForm actie={slaDossierOp.bind(null, id)} knop="Opslaan">
+            <ActieForm actie={slaDossierOp.bind(null, id)} knop={kan ? "Opslaan" : "Alleen bekijken"}>
               <div className="grid gap-4 md:grid-cols-3">
                 <div><span className={label}>Rol</span><select name="rol" defaultValue={m.rol} className={veld}>{(["medewerker", "shiftleider", "manager"] as const).map((r) => <option key={r} value={r}>{ROL_LABEL[r]}</option>)}</select></div>
                 <div><span className={label}>Functie</span><select name="functie" defaultValue={m.functieId ?? ""} className={veld}>{org.functies.filter((f) => f.familie === "vestiging").map((f) => <option key={f.id} value={f.id}>{f.naam}</option>)}</select></div>
@@ -133,7 +135,7 @@ export default async function Dossier({ params, searchParams }: PageProps<"/behe
                 </Link>
               ))}
             </div>
-            <details className="rounded-xl bg-slate-50 p-3" open={!contracten.length}>
+            {kanContract && <details className="rounded-xl bg-slate-50 p-3" open={!contracten.length}>
               <summary className="cursor-pointer text-sm font-semibold text-navy-700">{huidig?.eind ? "Contract verlengen of nieuw contract opstellen" : "Nieuw contract opstellen"}</summary>
               <ActieForm actie={maakContract.bind(null, id)} knop="Contract opstellen en ter ondertekening sturen" variant="rood" className="mt-3">
                 <div className="grid gap-3 md:grid-cols-3">
@@ -146,10 +148,10 @@ export default async function Dossier({ params, searchParams }: PageProps<"/behe
                 </div>
                 <p className="text-[12px] text-muted">De tekst komt uit het contractsjabloon van HQ HR (cao Horeca). {m.voornaam} tekent in de app, jij daarna als werkgever.</p>
               </ActieForm>
-            </details>
+            </details>}
           </Blok>
 
-          {!m.uitDienstPer && m.status !== "preboarding" && (
+          {kan && !m.uitDienstPer && m.status !== "preboarding" && (
             <Blok titel="Uit dienst melden">
               <ActieForm actie={meldUitDienst.bind(null, id)} knop="Offboarding starten" variant="licht">
                 <div className="grid gap-3 md:grid-cols-[180px_1fr]">

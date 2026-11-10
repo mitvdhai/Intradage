@@ -1,9 +1,10 @@
+import { mag } from "@/lib/access";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Check, Thermometer, X } from "lucide-react";
 import { cx } from "@/components/ui";
 import { beslisVerlof } from "@/lib/personeel/acties";
-import { diensten, magPersoneel, medewerkers, vandaagIso, verlofVan } from "@/lib/personeel/data";
+import { diensten, medewerkers, vandaagIso, verlofVan } from "@/lib/personeel/data";
 import { deadlineVan } from "@/lib/personeel/sjablonen";
 import { vereisGebruiker } from "@/lib/session";
 import { nuMs } from "@/lib/tijd";
@@ -13,7 +14,7 @@ const datum = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("n
 
 export default async function VerlofBeheer() {
   const { u, org } = await vereisGebruiker();
-  if (!magPersoneel(u)) redirect("/beheer");
+  if (!mag(org, u, "verlof", 1)) redirect("/beheer");
   const mensen = await medewerkers(org, u);
   const ids = mensen.map((m) => m.id);
   const vandaag = vandaagIso();
@@ -48,8 +49,8 @@ export default async function VerlofBeheer() {
                       <div className="text-sm"><span className="capitalize">{v.type}</span> · {datum(v.van)}{v.tot && v.tot !== v.van ? ` t/m ${datum(v.tot)}` : ""}{v.uren ? ` · ${v.uren} uur` : ""}</div>
                       <div className="text-[12px] text-muted">{v.opmerking ? `“${v.opmerking}” · ` : ""}{n ? <span className="font-semibold text-amber-700">{n} ingeplande dienst{n > 1 ? "en" : ""} in deze periode</span> : "geen ingeplande diensten"}</div>
                     </div>
-                    <form action={beslisVerlof.bind(null, v.id, true)}><button className="inline-flex items-center gap-1 rounded-lg bg-navy-700 px-3 py-1.5 text-sm font-semibold text-white"><Check size={15} /> Goedkeuren</button></form>
-                    <form action={beslisVerlof.bind(null, v.id, false)}><button className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-semibold text-muted ring-1 ring-line"><X size={15} /> Afwijzen</button></form>
+                    {mag(org, u, "verlof") && <><form action={beslisVerlof.bind(null, v.id, true)}><button className="inline-flex items-center gap-1 rounded-lg bg-navy-700 px-3 py-1.5 text-sm font-semibold text-white"><Check size={15} /> Goedkeuren</button></form>
+                    <form action={beslisVerlof.bind(null, v.id, false)}><button className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-semibold text-muted ring-1 ring-line"><X size={15} /> Afwijzen</button></form></>}
                   </div>
                 );
               })}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { TabBar, type TabIcoon } from "@/components/tabbar";
-import { isLeiding, magBeheer, ROL_LABEL } from "@/lib/access";
+import { heeftBeheer, isLeiding, ROL_LABEL } from "@/lib/access";
 import { uitloggen } from "@/lib/acties";
 import { teDoen } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
@@ -22,7 +22,7 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
         <div className="mx-auto flex max-w-md items-center justify-between px-4 py-1.5">
           <span>Demo · {u.voornaam} ({ROL_LABEL[u.rol]})</span>
           <span className="flex gap-3">
-            {magBeheer(u) && <Link href="/beheer" className="underline">Beheer</Link>}
+            {heeftBeheer(org, u) && <Link href="/beheer" className="underline">Beheer</Link>}
             <form action={uitloggen}><button className="underline">Wissel persoon</button></form>
           </span>
         </div>

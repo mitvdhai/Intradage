@@ -301,6 +301,73 @@ await p.goto(`${BASE}/beheer/uren/uitdraai?van=${vorigeMa}&tot=${volgende}&detai
 const uit = await tekst(p);
 ok(/urenoverzicht voor de loonadministratie/i.test(uit) && uit.includes("Sanne de Wit"), "uitdraai per periode met bevestigde uren");
 
+// 24. Rollen en rechten: HQ ziet de rolmatrix en de uitzonderingen per persoon
+p = await als("u-joost");
+await p.setViewport({ width: 1400, height: 900 });
+await p.goto(`${BASE}/beheer/rechten`, { waitUntil: "networkidle0" });
+const rt = await tekst(p);
+ok(/rollen en rechten/i.test(rt) && rt.includes("Maakt het weekrooster voor Centrum"), "HQ ziet rolmatrix en uitzonderingen per persoon");
+
+// 25. Uitzondering werkt: Lisa (HQ HR) heeft geen toegang tot de beloningsregeling
+p = await als("u-lisa");
+await p.goto(`${BASE}/beheer/regeling`, { waitUntil: "networkidle0" });
+ok(!p.url().includes("/beheer/regeling"), "uitzondering per persoon: Lisa kan de beloningsregeling niet openen");
+
+// 26. Shiftleider met recht 'planning beheren' kan het rooster maken, maar ziet geen dossiers
+p = await als("u-yara");
+await p.setViewport({ width: 1400, height: 900 });
+await p.goto(`${BASE}/beheer/planning`, { waitUntil: "networkidle0" });
+const yp = p.url().includes("/beheer/planning") && !(await tekst(p)).includes("Alleen bekijken");
+await p.goto(`${BASE}/beheer/personeel`, { waitUntil: "networkidle0" });
+ok(yp && !p.url().includes("/beheer/personeel"), "Yara mag plannen (persoonsrecht) maar ziet geen personeelsdossiers");
+
+// 27. Franchisenemer geeft een medewerker inzage in verlof
+p = await als("u-erik");
+await p.setViewport({ width: 1400, height: 900 });
+await p.goto(`${BASE}/beheer/rechten`, { waitUntil: "networkidle0" });
+await p.select('select[name="persoon"]', "u-sanne");
+await p.select('select[name="module"]', "verlof");
+await p.select('select[name="niveau"]', "1");
+await p.type('input[name="reden"]', "Vervangt de shiftleider tijdens vakantie");
+await klikTekst(p, "Toekennen");
+await p.waitForFunction(() => document.body.innerText.includes("Vervangt de shiftleider"), { timeout: 8000 }).catch(() => {});
+p = await als("u-sanne");
+await p.setViewport({ width: 1400, height: 900 });
+await p.goto(`${BASE}/beheer/verlof`, { waitUntil: "networkidle0" });
+ok(p.url().includes("/beheer/verlof") && (await tekst(p)).includes("Alleen bekijken") === false && /verlof/i.test(await tekst(p)), "persoonsrecht toegekend door FN: Sanne kan verlof inzien");
+
+// 28. Instellingen: nieuwe positie met minimumleeftijd
+p = await als("u-joost");
+await p.setViewport({ width: 1400, height: 900 });
+await p.goto(`${BASE}/beheer/instellingen?tab=posities`, { waitUntil: "networkidle0" });
+await p.type('input[placeholder^="Nieuwe positie"]', "Drive-in");
+await p.evaluate(() => { const f = document.querySelector('input[placeholder^="Nieuwe positie"]').form; f.querySelector('input[name="minLeeftijd"]').value = "18"; });
+await klikTekst(p, "Positie toevoegen");
+await p.waitForFunction(() => [...document.querySelectorAll('input[name="naam"]')].some((i) => i.value === "Drive-in"), { timeout: 8000 }).catch(() => {});
+ok(await p.evaluate(() => [...document.querySelectorAll('input[name="naam"]')].some((i) => i.value === "Drive-in")), "HQ voegt positie toe met minimumleeftijd");
+
+// 29. Handboek beheren
+await p.goto(`${BASE}/beheer/handboek?d=nieuw`, { waitUntil: "networkidle0" });
+await p.type('input[name="titel"]', "Drive-in bedienen");
+await p.type('textarea[name="inhoud"]', "1. Begroet de klant binnen 5 seconden. 2. Herhaal de bestelling. 3. Noem het totaalbedrag.");
+await klikTekst(p, "Document toevoegen");
+await p.waitForFunction(() => document.body.innerText.includes("Drive-in bedienen"), { timeout: 8000 }).catch(() => {});
+await p.goto(`${BASE}/beheer/handboek`, { waitUntil: "networkidle0" });
+ok((await tekst(p)).includes("Drive-in bedienen"), "handboekdocument toegevoegd vanuit beheer");
+
+// 30. Medewerker handmatig toevoegen (zonder vacature)
+p = await als("u-erik");
+await p.setViewport({ width: 1400, height: 900 });
+await p.goto(`${BASE}/beheer/personeel/nieuw`, { waitUntil: "networkidle0" });
+await p.type('input[name="voornaam"]', "Tim");
+await p.type('input[name="achternaam"]', "Visser");
+await p.type('input[name="mobiel"]', "0612345678");
+await p.evaluate(() => { document.querySelector('input[name="geboortedatum"]').value = "2010-03-01"; });
+await klikTekst(p, "Toevoegen en preboarding starten");
+await p.waitForFunction(() => location.pathname.startsWith("/beheer/personeel/u"), { timeout: 10000 }).catch(() => {});
+const tim = await tekst(p);
+ok(tim.includes("Tim Visser") && (await p.$('a[href^="/start/"]')) !== null && !/Kassa/.test(tim.split("Posities")[1]?.slice(0, 120) ?? ""), "medewerker handmatig toegevoegd; startlink klaar, geen kassa onder 16");
+
 await browser.close();
 console.log(fouten.length ? `\nFOUTEN:\n${fouten.join("\n")}` : "\nAlle flows OK");
 process.exit(fouten.length ? 1 : 0);

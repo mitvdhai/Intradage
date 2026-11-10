@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { isHQ } from "@/lib/access";
+import { mag } from "@/lib/access";
 import { herstelDemodata } from "@/lib/acties";
 import { auditLog, naamVan } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
@@ -7,7 +7,7 @@ import { Blok, Kop, Tabel } from "../beheer-ui";
 
 export default async function Logboek() {
   const { u, org } = await vereisGebruiker();
-  if (!isHQ(u)) redirect("/beheer");
+  if (!mag(org, u, "logboek", 1)) redirect("/beheer");
   const log = await auditLog(200);
   return (
     <>

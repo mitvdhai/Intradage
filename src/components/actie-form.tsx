@@ -21,7 +21,7 @@ export function ActieForm({ actie, children, knop, className, variant = "navy", 
     <form ref={ref} action={run} className={cx("space-y-3", className)}>
       {children}
       <div className="flex flex-wrap items-center gap-3">
-        <button disabled={bezig} className={cx("rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-60", kleur)}>{bezig ? "Bezig…" : knop}</button>
+        <button disabled={bezig || knop === "Alleen bekijken"} className={cx("rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-60", kleur)}>{bezig ? "Bezig…" : knop}</button>
         {res?.fout && <span className="text-sm text-brand-700">{res.fout}</span>}
         {res?.ok && <span className="text-sm text-emerald-700">{res.info ?? succes}</span>}
       </div>

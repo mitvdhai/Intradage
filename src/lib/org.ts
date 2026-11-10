@@ -3,6 +3,7 @@ import { cache } from "react";
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "./db/client";
 import * as t from "./db/schema";
+import { type Rechten } from "./rechten";
 import type { Beloningsregeling, Franchisenemer, Functie, Gebruiker, ProfielItem, Regio, Vestiging } from "./types";
 
 /**
@@ -19,6 +20,7 @@ export interface Org {
   profielItems: ProfielItem[];
   itemMap: Map<string, ProfielItem>;
   regeling: Beloningsregeling;
+  rechten: Rechten;
 }
 
 export const getOrg = cache(async (): Promise<Org> => {
@@ -34,6 +36,10 @@ export const getOrg = cache(async (): Promise<Org> => {
     db.select().from(t.profielItem),
     db.select().from(t.beloningsregeling).where(eq(t.beloningsregeling.actief, true)),
   ]);
+  const [rolR, persR] = await Promise.all([db.select().from(t.rolRecht), db.select().from(t.persoonRecht)]);
+  const rechten: Rechten = { rol: new Map(), persoon: new Map() };
+  for (const r of rolR) rechten.rol.set(r.rol, { ...rechten.rol.get(r.rol), [r.module]: r.niveau });
+  for (const r of persR) rechten.persoon.set(r.gebruikerId, { ...rechten.persoon.get(r.gebruikerId), [r.module]: r.niveau });
 
   const vestPer = new Map<string, string[]>();
   for (const r of gv) vestPer.set(r.gebruikerId, [...(vestPer.get(r.gebruikerId) ?? []), r.vestigingId]);
@@ -66,6 +72,7 @@ export const getOrg = cache(async (): Promise<Org> => {
     functies: functieLijst,
     profielItems,
     itemMap: new Map(profielItems.map((i) => [i.id, i])),
+    rechten,
     regeling: { versie: r.versie, banden: r.banden, verhoging: r.verhoging, maxUitkomstBijOntbrekendeVoorwaarde: r.maxUitkomstBijOntbrekendeVoorwaarde },
   };
 });

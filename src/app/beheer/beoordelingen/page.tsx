@@ -1,6 +1,7 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { euro } from "@/components/ui";
-import { isHQ, scopeVestigingen } from "@/lib/access";
+import { isHQ, scopeVestigingen, mag } from "@/lib/access";
 import { beoordelingen, naamVan, vestigingNaam, voornaamVan } from "@/lib/data";
 import { berekenUitslag } from "@/lib/functiehuis/score";
 import { vereisGebruiker } from "@/lib/session";
@@ -11,6 +12,7 @@ const UITKOMSTEN: Uitkomst[] = ["onvoldoende", "matig", "goed", "zeer goed", "ui
 
 export default async function Beoordelingen() {
   const { u, org } = await vereisGebruiker();
+  if (!mag(org, u, "beoordelingen", 1)) redirect("/beheer");
   const scope = new Set(scopeVestigingen(org, u));
   const inScope = org.gebruikers.filter((g) => g.vestigingIds.some((v) => scope.has(v)));
   const rijen = (await beoordelingen({ gebruikerIds: inScope.map((g) => g.id) })).map((b) => {
@@ -21,7 +23,7 @@ export default async function Beoordelingen() {
   const verdeling = UITKOMSTEN.map((x) => ({ x, n: rijen.filter((r) => r.uitslag.uitkomst === x).length }));
   const max = Math.max(1, ...verdeling.map((v) => v.n));
   // HQ ziet geen individuele salarissen, alleen of er een besluit is (dataminimalisatie)
-  const toonSalaris = !isHQ(u) || u.discipline === "hr";
+  const toonSalaris = mag(org, u, "regeling", 1) || !isHQ(u);
 
   return (
     <>

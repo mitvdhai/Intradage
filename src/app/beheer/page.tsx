@@ -1,4 +1,5 @@
-import { inDoelgroep, isHQ, scopeVestigingen } from "@/lib/access";
+import { redirect } from "next/navigation";
+import { inDoelgroep, isHQ, mag, scopeVestigingen } from "@/lib/access";
 import { alleBerichten, alleHandboekDocs, alleLeerItems, beoordelingen, statussenVan, voortgangVanMeerdere } from "@/lib/data";
 import type { Org } from "@/lib/org";
 import { vereisGebruiker } from "@/lib/session";
@@ -32,6 +33,10 @@ function onboardingPct(mensen: Gebruiker[], items: LeerItem[], vg: LeerVoortgang
 
 export default async function Overzicht() {
   const { u, org } = await vereisGebruiker();
+  if (!mag(org, u, "berichten", 1) && !mag(org, u, "medewerkers", 1)) {
+    const eerste = (["planning", "uren", "verlof", "evaluaties", "werving", "vestigingen", "handboek", "leren"] as const).find((m) => mag(org, u, m, 1));
+    redirect(eerste ? `/beheer/${eerste}` : "/app");
+  }
   const scope = new Set(scopeVestigingen(org, u));
   const mensen = org.gebruikers.filter((g) => g.rol !== "hq" && g.rol !== "franchisenemer" && g.vestigingIds.some((v) => scope.has(v)));
   const ids = mensen.map((m) => m.id);

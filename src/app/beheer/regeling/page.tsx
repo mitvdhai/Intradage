@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import { RegelingEditor } from "@/components/regeling-editor";
-import { isHQ } from "@/lib/access";
+import { mag } from "@/lib/access";
 import { vereisGebruiker } from "@/lib/session";
 import { Blok, Kop } from "../beheer-ui";
 
 export default async function Regeling() {
   const { u, org } = await vereisGebruiker();
-  if (!isHQ(u)) redirect("/beheer");
+  if (!mag(org, u, "regeling", 1)) redirect("/beheer");
   return (
     <>
       <Kop titel="Beloningsregeling" sub={`Versie ${org.regeling.versie} · van gewogen beoordelingsscore naar salarisadvies`} />

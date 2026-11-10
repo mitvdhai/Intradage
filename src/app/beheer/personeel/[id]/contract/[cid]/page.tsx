@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { ActieForm, Handtekening, HandtekeningWeergave } from "@/components/actie-form";
-import { isHQ } from "@/lib/access";
+import { mag } from "@/lib/access";
 import { tekenAlsWerkgever, trekContractIn } from "@/lib/personeel/acties";
 import { contract, magDossier, medewerker } from "@/lib/personeel/data";
 import { vereisGebruiker } from "@/lib/session";
@@ -16,7 +16,7 @@ export default async function ContractPagina({ params }: PageProps<"/beheer/pers
   const [m, c] = await Promise.all([medewerker(id), contract(cid)]);
   if (!m || !c || c.gebruikerId !== id || !magDossier(org, u, m)) notFound();
   const ondertekenaar = org.gebruikers.find((g) => g.id === c.werkgeverOndertekenaarId);
-  const magTekenen = (u.rol === "franchisenemer" || isHQ(u)) && c.status === "ter-ondertekening" && !c.ondertekendWerkgever;
+  const magTekenen = mag(org, u, "contracten") && c.status === "ter-ondertekening" && !c.ondertekendWerkgever;
 
   return (
     <>
@@ -56,7 +56,7 @@ export default async function ContractPagina({ params }: PageProps<"/beheer/pers
             </dl>
             <p className="mt-3 flex gap-2 text-[12px] text-muted"><ShieldCheck size={16} className="shrink-0 text-navy-600" /> Een elektronische handtekening is rechtsgeldig voor een arbeidsovereenkomst. We leggen per handtekening tijdstip, ondertekenaar en de vingerafdruk van de tekst vast in het logboek; als de tekst daarna wijzigt, past de vingerafdruk niet meer.</p>
           </Blok>
-          {c.status === "ter-ondertekening" && (
+          {c.status === "ter-ondertekening" && mag(org, u, "contracten") && (
             <form action={trekContractIn.bind(null, c.id)}><button className="text-sm font-semibold text-muted underline">Contractvoorstel intrekken</button></form>
           )}
         </div>

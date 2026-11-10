@@ -1,6 +1,6 @@
-import { scopeVestigingen } from "@/lib/access";
+import { scopeVestigingen, mag } from "@/lib/access";
 import { audit } from "@/lib/audit";
-import { contractenVan, klokVan, magPersoneel, medewerkers, nettoUren } from "@/lib/personeel/data";
+import { contractenVan, klokVan, medewerkers, nettoUren } from "@/lib/personeel/data";
 import { huidigeGebruiker } from "@/lib/session";
 
 const csv = (rijen: (string | number | null | undefined)[][]) =>
@@ -11,7 +11,7 @@ const geldig = (s: string | null) => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s);
 /** Export voor de loonadministratie: goedgekeurde uren, of personeelsmutaties (in/uit dienst, contractwijzigingen). */
 export async function GET(req: Request) {
   const s = await huidigeGebruiker();
-  if (!s || !magPersoneel(s.u)) return new Response("Geen toegang", { status: 403 });
+  if (!s || !mag(s.org, s.u, "uren", 1)) return new Response("Geen toegang", { status: 403 });
   const url = new URL(req.url);
   const van = url.searchParams.get("van"), tot = url.searchParams.get("tot");
   if (!geldig(van) || !geldig(tot)) return new Response("Geef van en tot op (JJJJ-MM-DD)", { status: 400 });

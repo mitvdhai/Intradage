@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { ExternalLink, Star, Users } from "lucide-react";
 import { ActieForm } from "@/components/actie-form";
 import { cx } from "@/components/ui";
-import { scopeVestigingen } from "@/lib/access";
+import { mag, scopeVestigingen } from "@/lib/access";
 import { maakVacature, sluitVacature } from "@/lib/personeel/acties";
-import { kandidaten, magPersoneel, vacatures } from "@/lib/personeel/data";
+import { kandidaten, vacatures } from "@/lib/personeel/data";
 import { leeftijdOp } from "@/lib/planning/atw";
 import { vereisGebruiker } from "@/lib/session";
 import { Blok, Kop, Kpi } from "../beheer-ui";
@@ -18,8 +18,9 @@ const veld = "w-full rounded-lg border border-line px-2.5 py-1.5 text-sm";
 
 export default async function Werving() {
   const { u, org } = await vereisGebruiker();
-  if (!magPersoneel(u)) redirect("/beheer");
+  if (!mag(org, u, "werving", 1)) redirect("/beheer");
   const scope = scopeVestigingen(org, u);
+  const kan = mag(org, u, "werving");
   const vac = await vacatures(scope);
   const kand = await kandidaten(vac.map((v) => v.id));
   const vandaag = new Date().toLocaleDateString("sv-SE");
@@ -79,14 +80,14 @@ export default async function Werving() {
                   </div>
                   {v.status === "open" && <Link href={`/werken-bij/${v.slug}`} target="_blank" className="inline-flex items-center gap-1 text-[13px] font-semibold text-navy-600">Bekijk <ExternalLink size={13} /></Link>}
                   <span className={cx("rounded-full px-2 py-0.5 text-[11px] font-semibold", v.status === "open" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-muted")}>{v.status}</span>
-                  <form action={sluitVacature.bind(null, v.id)}><button className="text-[12px] font-semibold text-muted underline">{v.status === "open" ? "Sluiten" : "Heropenen"}</button></form>
+                  {kan && <form action={sluitVacature.bind(null, v.id)}><button className="text-[12px] font-semibold text-muted underline">{v.status === "open" ? "Sluiten" : "Heropenen"}</button></form>}
                 </div>
               );
             })}
           </div>
           <p className="mt-3 text-[12px] text-muted">Open vacatures staan op <Link href="/werken-bij" className="underline">/werken-bij</Link>. Medewerkers delen een vacature met hun eigen link; een aangedragen collega die wordt aangenomen levert 50 punten op.</p>
         </Blok>
-        <Blok titel="Nieuwe vacature">
+        {kan && <Blok titel="Nieuwe vacature">
           <ActieForm actie={maakVacature} knop="Vacature plaatsen" variant="rood" reset>
             <div className="grid gap-2 md:grid-cols-2">
               <select name="vestiging" className={veld}>{org.vestigingen.filter((v) => scope.includes(v.id)).map((v) => <option key={v.id} value={v.id}>{v.naam} · {v.plaats}</option>)}</select>
@@ -96,7 +97,7 @@ export default async function Werving() {
             </div>
             <textarea name="omschrijving" rows={3} placeholder="Wat ga je doen, wie zoeken we, wat bieden we?" className={veld} />
           </ActieForm>
-        </Blok>
+        </Blok>}
       </div>
     </>
   );

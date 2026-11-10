@@ -1,7 +1,8 @@
+import { redirect } from "next/navigation";
 import { NieuweEnquete, NieuwEvenement } from "@/components/beheer-betrokkenheid-forms";
 import { EnqueteResultaat } from "@/components/enquete-resultaat";
 import { tijdLabel } from "@/components/ui";
-import { isHQ, ontvangers, scopeVestigingen } from "@/lib/access";
+import { isHQ, ontvangers, scopeVestigingen, mag } from "@/lib/access";
 import { behandelBeloning } from "@/lib/acties-betrokkenheid";
 import { beloningAanvragen, beloningen, deelnameAantal, enqueteResultaten, enquetesVoor, evenementenVoor, waarden, waarderingen } from "@/lib/betrokkenheid";
 import { naamVan, vestigingNaam } from "@/lib/data";
@@ -11,6 +12,7 @@ import { Blok, Kop, Kpi, Pct, Tabel } from "../beheer-ui";
 
 export default async function BeheerBetrokkenheid() {
   const { u, org } = await vereisGebruiker();
+  if (!mag(org, u, "betrokkenheid", 1)) redirect("/beheer");
   const scope = new Set(scopeVestigingen(org, u));
   const mensen = org.gebruikers.filter((g) => g.rol !== "hq" && g.vestigingIds.some((v) => scope.has(v)));
   const ids = new Set(mensen.map((m) => m.id));

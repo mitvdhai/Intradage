@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
-import { inDoelgroep, isHQ, isLeiding, magBeheer, scopeVestigingen } from "./access";
+import { inDoelgroep, isHQ, isLeiding, mag, scopeVestigingen } from "./access";
 import { audit } from "./audit";
 import { checklistVestigingen, enquete as leesEnquete, punten, sjabloon as leesSjabloon, uitvoering as leesUitvoering, zichtbareMensen } from "./betrokkenheid";
 import { berekenChecklist } from "./checklist/score";
@@ -92,7 +92,7 @@ export async function vraagBeloningAan(beloningId: string) {
 
 export async function behandelBeloning(aanvraagId: string, uitgereikt: boolean) {
   const { u, org } = await vereisGebruiker();
-  if (!magBeheer(u)) return;
+  if (!mag(org, u, "betrokkenheid")) return;
   const db = await getDb();
   const [a] = await db.select().from(t.beloningAanvraag).where(eq(t.beloningAanvraag.id, aanvraagId));
   const aanvrager = org.gebruikers.find((g) => g.id === a?.gebruikerId);
@@ -139,7 +139,7 @@ export async function beantwoordEnquete(enqueteId: string, _: unknown, formData:
 
 export async function maakEnquete(_: unknown, formData: FormData): Promise<{ fout?: string; ok?: boolean }> {
   const { u, org } = await vereisGebruiker();
-  if (!magBeheer(u)) return { fout: "Geen rechten." };
+  if (!mag(org, u, "betrokkenheid")) return { fout: "Geen rechten." };
   const type = tekst(formData, "type") as "poll" | "pulse" | "enps";
   const titel = tekst(formData, "titel");
   const vraag = tekst(formData, "vraag");
@@ -177,8 +177,8 @@ export async function meldAan(evenementId: string, status: "ja" | "misschien" | 
 }
 
 export async function maakEvenement(_: unknown, formData: FormData): Promise<{ fout?: string; ok?: boolean }> {
-  const { u } = await vereisGebruiker();
-  if (!magBeheer(u)) return { fout: "Geen rechten." };
+  const { u, org } = await vereisGebruiker();
+  if (!mag(org, u, "betrokkenheid")) return { fout: "Geen rechten." };
   const titel = tekst(formData, "titel");
   const start = new Date(tekst(formData, "start"));
   if (!titel || Number.isNaN(start.getTime())) return { fout: "Vul een titel en een datum en tijd in." };

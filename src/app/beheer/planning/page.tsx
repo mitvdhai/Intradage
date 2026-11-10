@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { AlertTriangle, CalendarCheck, ChevronLeft, ChevronRight, Send } from "lucide-react";
 import { DienstKaart, NieuweDienst, SuggestieKnop, type Optie } from "@/components/planning";
 import { cx } from "@/components/ui";
-import { scopeVestigingen } from "@/lib/access";
+import { scopeVestigingen, mag } from "@/lib/access";
 import { publiceerWeek } from "@/lib/personeel/acties";
-import { diensten, dienstUren, maandagVan, magPersoneel, normen, planGegevens, posities, vestigingen } from "@/lib/personeel/data";
+import { diensten, dienstUren, maandagVan, normen, planGegevens, posities, vestigingen } from "@/lib/personeel/data";
 import { deadlineVan } from "@/lib/personeel/sjablonen";
 import { controleerDienst, leeftijdOp } from "@/lib/planning/atw";
 import { beschikbaarVoor, teJongVoor } from "@/lib/planning/suggestie";
@@ -19,7 +19,8 @@ const kort = (n: string) => n.split(" ")[0];
 export default async function Planning({ searchParams }: PageProps<"/beheer/planning">) {
   const sp = await searchParams;
   const { u, org } = await vereisGebruiker();
-  if (!magPersoneel(u)) redirect("/beheer");
+  if (!mag(org, u, "planning", 1)) redirect("/beheer");
+  const kan = mag(org, u, "planning");
   const scope = scopeVestigingen(org, u);
   const vest = await vestigingen(scope);
   const v = vest.find((x) => x.id === sp.v) ?? vest[0];
@@ -75,8 +76,8 @@ export default async function Planning({ searchParams }: PageProps<"/beheer/plan
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {vest.map((x) => <Link key={x.id} href={link(maandag, x.id)} className={cx("rounded-full px-3.5 py-1.5 text-sm font-semibold", x.id === v.id ? "bg-navy-700 text-white" : "bg-white ring-1 ring-line")}>{x.naam} · {x.plaats}</Link>)}
         <div className="ml-auto flex items-center gap-2">
-          <SuggestieKnop vestigingId={v.id} maandag={maandag} heeftConcept={week.some((d) => d.status === "concept" && d.bron === "suggestie")} />
-          {concept > 0 && <form action={publiceerWeek.bind(null, v.id, maandag)}><button className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-semibold text-white"><Send size={16} /> Publiceren ({concept})</button></form>}
+          {kan ? <SuggestieKnop vestigingId={v.id} maandag={maandag} heeftConcept={week.some((d) => d.status === "concept" && d.bron === "suggestie")} /> : <span className="rounded-full bg-slate-100 px-3 py-1 text-[13px] font-semibold text-muted">Alleen bekijken</span>}
+          {kan && concept > 0 && <form action={publiceerWeek.bind(null, v.id, maandag)}><button className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-semibold text-white"><Send size={16} /> Publiceren ({concept})</button></form>}
         </div>
       </div>
 
@@ -115,7 +116,7 @@ export default async function Planning({ searchParams }: PageProps<"/beheer/plan
                     const lijst = week.filter((d) => d.positieId === p.id && d.start.toLocaleDateString("sv-SE") === dt).sort((a, b) => a.start.getTime() - b.start.getTime());
                     return (
                       <td key={dt} className="space-y-1 rounded-lg bg-slate-50 p-1 align-top">
-                        {lijst.map((d) => <DienstKaart key={d.id} id={d.id} tijd={`${hhmm(d.start)}–${hhmm(d.eind)}`} gebruikerId={d.gebruikerId} opties={opties(d)} concept={d.status === "concept"} kleur={p.kleur} verleden={d.eind.getTime() < nu} />)}
+                        {lijst.map((d) => <DienstKaart key={d.id} id={d.id} tijd={`${hhmm(d.start)}–${hhmm(d.eind)}`} gebruikerId={d.gebruikerId} opties={opties(d)} concept={d.status === "concept"} kleur={p.kleur} verleden={!kan || d.eind.getTime() < nu} />)}
                       </td>
                     );
                   })}
@@ -153,7 +154,7 @@ export default async function Planning({ searchParams }: PageProps<"/beheer/plan
             </tbody>
           </table>
         </Blok>
-        <Blok titel="Dienst toevoegen">
+        {kan && <Blok titel="Dienst toevoegen">
           <NieuweDienst vestigingId={v.id} dagen={dagen.map((dt) => ({ datum: dt, label: new Date(`${dt}T12:00:00`).toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "short" }) }))}
             posities={pos.map((p) => ({ id: p.id, naam: p.naam }))} mensen={kandidaten.map((k) => ({ id: k.id, naam: k.naam }))} />
           <div className="mt-4 space-y-2 text-[13px] text-muted">
@@ -161,7 +162,7 @@ export default async function Planning({ searchParams }: PageProps<"/beheer/plan
             <p className="flex gap-2"><AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" /> <span>Jongeren onder de 18 worden niet na 23:00 en niet langer dan 9 uur ingepland (onder de 16: niet na 19:00). Tussen twee diensten zit minstens 11 uur rust (jongeren 12). Per positie geldt een minimumleeftijd: {pos.filter((p) => p.minLeeftijd).map((p) => `${p.naam.toLowerCase()} vanaf ${p.minLeeftijd}`).join(", ")}. Daar kan niemand omheen.</span></p>
             {!norm.length && <p className="font-semibold text-brand-700">Deze vestiging heeft nog geen standaardbezetting. Stel die eerst in.</p>}
           </div>
-        </Blok>
+        </Blok>}
       </div>
     </>
   );

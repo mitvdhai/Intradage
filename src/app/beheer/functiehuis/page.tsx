@@ -1,13 +1,15 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { FunctieprofielEditor } from "@/components/functieprofiel-editor";
 import { cx } from "@/components/ui";
-import { isHQ } from "@/lib/access";
+import { mag } from "@/lib/access";
 import { vereisGebruiker } from "@/lib/session";
 import { Blok, Kop } from "../beheer-ui";
 
 export default async function Functiehuis({ searchParams }: PageProps<"/beheer/functiehuis">) {
   const { f } = await searchParams;
   const { u, org } = await vereisGebruiker();
+  if (!mag(org, u, "functiehuis", 1)) redirect("/beheer");
   const functies = [...org.functies].sort((a, b) => a.trede - b.trede);
   const actief = functies.find((x) => x.id === f) ?? functies[0];
   const bezetting = (id: string) => org.gebruikers.filter((g) => g.functieId === id).length;
@@ -39,8 +41,8 @@ export default async function Functiehuis({ searchParams }: PageProps<"/beheer/f
               <div><div className="mb-1 font-semibold">Plaats</div><p>{actief.plaatsInOrganisatie}</p></div>
             </div>
           </Blok>
-          <Blok titel="Profiel en weging" rechts={!isHQ(u) ? <span className="text-[12px] text-muted">alleen HQ kan wijzigen</span> : undefined}>
-            <FunctieprofielEditor key={actief.id} functie={actief} items={org.profielItems} magBewerken={isHQ(u)} />
+          <Blok titel="Profiel en weging" rechts={!mag(org, u, "functiehuis") ? <span className="text-[12px] text-muted">alleen bekijken</span> : undefined}>
+            <FunctieprofielEditor key={actief.id} functie={actief} items={org.profielItems} magBewerken={mag(org, u, "functiehuis")} />
           </Blok>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Award, BookOpen, CalendarDays, ClipboardCheck, ExternalLink, Gift, MessageSquareHeart, Settings, UserPlus, Users } from "lucide-react";
 import { Lijst, PageTop, Rij, Sectie } from "@/components/ui";
-import { isHQ, isLeiding, magBeheer } from "@/lib/access";
+import { heeftBeheer, isHQ, isLeiding } from "@/lib/access";
 import { uitloggen } from "@/lib/acties";
 import { punten } from "@/lib/betrokkenheid";
 import { vereisGebruiker } from "@/lib/session";
@@ -14,7 +14,7 @@ const SNELKOPPELINGEN = [
 ];
 
 export default async function Meer() {
-  const { u } = await vereisGebruiker();
+  const { u, org } = await vereisGebruiker();
   const p = await punten(u.id);
   const tegels = [
     { href: "/app/handboek", titel: "Handboek", sub: "Werkinstructies + vraag het", icoon: BookOpen },
@@ -53,7 +53,7 @@ export default async function Meer() {
       <Sectie titel="Account">
         <Lijst>
           <Rij href={`/app/smoelenboek/${u.id}`} icoon={<Users size={18} />} titel="Mijn profiel" sub="Wat collega's van je zien" />
-          {(magBeheer(u) || isLeiding(u)) && <Rij href={magBeheer(u) ? "/beheer" : "/beheer/planning"} icoon={<Settings size={18} />} titel="Beheeromgeving" sub="Planning, personeel en meer · op de laptop" />}
+          {heeftBeheer(org, u) && <Rij href="/beheer" icoon={<Settings size={18} />} titel="Beheeromgeving" sub="Planning, personeel en meer · op de laptop" />}
         </Lijst>
         <form action={uitloggen} className="mt-3"><button className="tap w-full rounded-xl text-[15px] font-semibold text-brand-700 ring-1 ring-line">Uitloggen</button></form>
       </Sectie>

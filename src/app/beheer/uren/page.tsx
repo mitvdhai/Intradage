@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { ChevronLeft, ChevronRight, Download, FileText } from "lucide-react";
 import { ActieForm } from "@/components/actie-form";
 import { cx } from "@/components/ui";
-import { scopeVestigingen } from "@/lib/access";
+import { scopeVestigingen, mag } from "@/lib/access";
 import { corrigeerKlok, keurUrenGoed } from "@/lib/personeel/acties";
-import { contractenVan, diensten, geldendContract, klokVan, maandagVan, magPersoneel, medewerkers, nettoUren } from "@/lib/personeel/data";
+import { contractenVan, diensten, geldendContract, klokVan, maandagVan, medewerkers, nettoUren } from "@/lib/personeel/data";
 import { deadlineVan } from "@/lib/personeel/sjablonen";
 import { vereisGebruiker } from "@/lib/session";
 import { nuMs } from "@/lib/tijd";
@@ -17,7 +17,7 @@ const n1 = (n: number) => n.toFixed(2).replace(".", ",");
 export default async function Uren({ searchParams }: PageProps<"/beheer/uren">) {
   const { week } = await searchParams;
   const { u, org } = await vereisGebruiker();
-  if (!magPersoneel(u)) redirect("/beheer");
+  if (!mag(org, u, "uren", 1)) redirect("/beheer");
   const maandag = typeof week === "string" && /^\d{4}-\d{2}-\d{2}$/.test(week) ? maandagVan(new Date(`${week}T12:00:00`)) : maandagVan(new Date(nuMs() - 7 * 86400000));
   const van = new Date(`${maandag}T00:00:00`), tot = new Date(`${deadlineVan(maandag, 7)}T00:00:00`);
   const scope = scopeVestigingen(org, u);
@@ -45,7 +45,7 @@ export default async function Uren({ searchParams }: PageProps<"/beheer/uren">) 
         <Kpi waarde={String(teKeuren.length)} label="regels te bevestigen" toon={teKeuren.length ? "rood" : "navy"} />
         <Kpi waarde={String(klok.filter((k) => k.dienstId && Math.abs(afwijking(k, gepland)) > 15).length)} label="afwijkingen > 15 min t.o.v. rooster" />
       </div>
-      <Blok titel="Per medewerker" rechts={teKeuren.length ? <form action={keurUrenGoed.bind(null, teKeuren.map((k) => k.id))}><button className="rounded-lg bg-navy-700 px-3.5 py-1.5 text-sm font-semibold text-white">Alles goedkeuren ({teKeuren.length})</button></form> : <span className="text-sm text-emerald-700">Alles goedgekeurd</span>}>
+      <Blok titel="Per medewerker" rechts={teKeuren.length && mag(org, u, "uren") ? <form action={keurUrenGoed.bind(null, teKeuren.map((k) => k.id))}><button className="rounded-lg bg-navy-700 px-3.5 py-1.5 text-sm font-semibold text-white">Alles goedkeuren ({teKeuren.length})</button></form> : <span className="text-sm text-emerald-700">Alles goedgekeurd</span>}>
         <div className="space-y-5">
           {perPersoon.map(({ m, regels }) => {
             const c = geldendContract(contracten, m.id, maandag);
@@ -72,7 +72,7 @@ export default async function Uren({ searchParams }: PageProps<"/beheer/uren">) 
                           <td className={cx("w-28 text-[12px]", Math.abs(af) > 15 ? "font-semibold text-amber-700" : "text-muted")}>{d ? (Math.abs(af) > 1 ? `${af > 0 ? "+" : ""}${Math.round(af)} min` : "volgens rooster") : ""}</td>
                           <td className="w-28"><span className={cx("rounded-full px-2 py-0.5 text-[11px] font-semibold", k.status === "goedgekeurd" ? "bg-emerald-50 text-emerald-700" : k.status === "ingediend" ? "bg-amber-50 text-amber-700" : "bg-navy-50 text-navy-700")}>{k.status === "open" ? "ingeklokt" : k.status}</span></td>
                           <td>
-                            {k.uit && <details className="relative"><summary className="cursor-pointer text-[12px] font-semibold text-navy-600">Corrigeer</summary>
+                            {k.uit && mag(org, u, "uren") && <details className="relative"><summary className="cursor-pointer text-[12px] font-semibold text-navy-600">Corrigeer</summary>
                               <div className="absolute right-0 z-10 mt-1 w-72 rounded-xl border border-line bg-white p-3 shadow-lg">
                                 <ActieForm actie={corrigeerKlok.bind(null, k.id)} knop="Opslaan en goedkeuren">
                                   <div className="flex gap-2"><input name="in" type="time" defaultValue={hhmm(k.in)} className="rounded border border-line px-1.5 py-1 text-sm" /><input name="uit" type="time" defaultValue={hhmm(k.uit)} className="rounded border border-line px-1.5 py-1 text-sm" /><input name="pauze" type="number" defaultValue={k.pauzeMin} className="w-16 rounded border border-line px-1.5 py-1 text-sm" /></div>

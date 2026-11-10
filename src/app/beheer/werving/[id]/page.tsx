@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import { Mail, Phone } from "lucide-react";
 import { ActieForm } from "@/components/actie-form";
 import { cx } from "@/components/ui";
-import { scopeVestigingen } from "@/lib/access";
+import { scopeVestigingen, mag } from "@/lib/access";
 import { bewerkKandidaat, neemAan, wijzigFase } from "@/lib/personeel/acties";
-import { kandidaat, magPersoneel, vacatures } from "@/lib/personeel/data";
+import { kandidaat, vacatures } from "@/lib/personeel/data";
 import { leeftijdOp, regelsVoor } from "@/lib/planning/atw";
 import { vereisGebruiker } from "@/lib/session";
 import { Blok, Kop } from "../../beheer-ui";
@@ -18,7 +18,7 @@ export default async function KandidaatPagina({ params }: PageProps<"/beheer/wer
   const { id } = await params;
   const { u, org } = await vereisGebruiker();
   const k = await kandidaat(id);
-  if (!k || !magPersoneel(u)) notFound();
+  if (!k || !mag(org, u, "werving", 1)) notFound();
   const vac = (await vacatures(scopeVestigingen(org, u))).find((v) => v.id === k.vacatureId);
   if (!vac) notFound();
   const vandaag = new Date().toLocaleDateString("sv-SE");
@@ -31,7 +31,7 @@ export default async function KandidaatPagina({ params }: PageProps<"/beheer/wer
       <Kop titel={`${k.voornaam} ${k.achternaam}`} sub={`${vac.titel} · ${org.vestigingen.find((v) => v.id === vac.vestigingId)?.naam} · gesolliciteerd ${k.tijd.toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}`}
         rechts={<Link href="/beheer/werving" className="text-sm font-semibold text-navy-600">← Werving</Link>} />
 
-      {k.fase !== "aangenomen" && (
+      {k.fase !== "aangenomen" && mag(org, u, "werving") && (
         <div className="mb-5 flex flex-wrap gap-1.5">
           {FASEN.map((f) => (
             <form key={f} action={wijzigFase.bind(null, k.id, f)}>
@@ -70,7 +70,7 @@ export default async function KandidaatPagina({ params }: PageProps<"/beheer/wer
           </Blok>
         </div>
         <div>
-          {k.fase === "aangenomen" ? (
+          {!mag(org, u, "werving") ? null : k.fase === "aangenomen" ? (
             <Blok titel="Aangenomen">
               <p className="text-sm">{k.voornaam} zit in de preboarding.</p>
               {k.gebruikerId && <Link href={`/beheer/personeel/${k.gebruikerId}`} className="mt-2 inline-block font-semibold text-navy-600">Naar het dossier →</Link>}

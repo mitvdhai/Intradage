@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { AlertTriangle, Download } from "lucide-react";
 import { PrintKnop } from "@/components/print-knop";
 import { cx } from "@/components/ui";
-import { scopeVestigingen } from "@/lib/access";
-import { contractenVan, geldendContract, klokVan, magPersoneel, medewerkers, nettoUren, urenInTeVullen } from "@/lib/personeel/data";
+import { scopeVestigingen, mag } from "@/lib/access";
+import { contractenVan, geldendContract, klokVan, medewerkers, nettoUren, urenInTeVullen } from "@/lib/personeel/data";
 import { deadlineVan } from "@/lib/personeel/sjablonen";
 import { vereisGebruiker } from "@/lib/session";
 
@@ -19,7 +19,7 @@ const TYPE = { oproep: "0-uren", minmax: "min-max", vast: "vast" } as const;
 export default async function Uitdraai({ searchParams }: PageProps<"/beheer/uren/uitdraai">) {
   const sp = await searchParams;
   const { u, org } = await vereisGebruiker();
-  if (!magPersoneel(u)) redirect("/beheer");
+  if (!mag(org, u, "uren", 1)) redirect("/beheer");
   const vandaag = new Date().toLocaleDateString("sv-SE");
   const van = geldig(sp.van) ? sp.van : `${vandaag.slice(0, 8)}01`;
   const tot = geldig(sp.tot) && sp.tot >= van ? sp.tot : vandaag;
