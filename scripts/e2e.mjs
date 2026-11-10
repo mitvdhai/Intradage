@@ -20,7 +20,7 @@ async function als(persona) {
 const tekst = (p) => p.evaluate(() => document.body.innerText);
 const klikTekst = async (p, t) => {
   const els = await p.$$("button");
-  for (const e of els) if ((await e.evaluate((n) => n.innerText)).includes(t)) { await e.click(); return true; }
+  for (const e of els) if ((await e.evaluate((n) => n.innerText)).includes(t)) { await e.evaluate((n) => n.click()); return true; }
   return false;
 };
 
@@ -101,6 +101,92 @@ ok(disabled && (await tekst(p)).includes("105%"), "opslaan geblokkeerd als wegin
 // 8. Logboek bevat het besluit
 await p.goto(`${BASE}/beheer/logboek`, { waitUntil: "networkidle0" });
 ok((await tekst(p)).includes("Salarisbesluit vastgelegd"), "salarisbesluit staat in het logboek");
+
+// 9. Tijdlijn: Sanne plaatst een post en liket een waardering
+p = await als("u-sanne");
+await p.goto(`${BASE}/app`, { waitUntil: "networkidle0" });
+await p.focus('textarea[name="inhoud"]');
+await p.type('textarea[name="inhoud"]', "E2E-post: nieuwe saus is top!");
+await klikTekst(p, "Plaats");
+await p.waitForFunction(() => document.body.innerText.includes("E2E-post"), { timeout: 8000 });
+ok(true, "medewerker plaatst een post op de tijdlijn");
+const likeVoor = await p.$$eval('button[aria-pressed="true"]', (e) => e.length);
+await p.evaluate(() => [...document.querySelectorAll('button[aria-pressed="false"]')][0]?.click());
+await p.waitForFunction((n) => document.querySelectorAll('button[aria-pressed="true"]').length > n, { timeout: 8000 }, likeVoor).catch(() => {});
+ok((await p.$$eval('button[aria-pressed="true"]', (e) => e.length)) > likeVoor, "like wordt opgeslagen");
+
+// 10. Waardering geven → punten voor ontvanger
+await p.goto(`${BASE}/app/waardering/geven?aan=u-daan`, { waitUntil: "networkidle0" });
+await p.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.innerText.includes("Samen"))?.click());
+await p.waitForSelector('textarea[name="tekst"]', { timeout: 8000 });
+await p.type('textarea[name="tekst"]', "E2E: dank voor het overnemen van mijn dienst!");
+await klikTekst(p, "Verstuur waardering");
+await p.waitForFunction(() => location.search.includes("gegeven=1"), { timeout: 8000 });
+ok((await tekst(p)).includes("E2E: dank"), "waardering staat in de feed na versturen");
+
+// 11. Pulse invullen → verdwijnt uit Te doen
+await p.goto(`${BASE}/app/enquetes/e-pulse`, { waitUntil: "networkidle0" });
+await p.evaluate(() => document.querySelector('input[name="q1"][value="4"]')?.closest("label")?.click());
+await klikTekst(p, "Versturen");
+await p.waitForFunction(() => /bedankt|dank je wel/i.test(document.body.innerText), { timeout: 8000 });
+await p.goto(`${BASE}/app`, { waitUntil: "networkidle0" });
+ok(!(await tekst(p)).includes("Hoe was je week?"), "ingevulde pulse verdwijnt uit Te doen");
+
+// 12. Aanmelden voor een evenement
+await p.goto(`${BASE}/app/evenementen`, { waitUntil: "networkidle0" });
+await klikTekst(p, "Ik ga");
+await p.waitForFunction(() => /Gaan: .*Sanne/.test(document.body.innerText), { timeout: 8000 }).catch(() => {});
+ok(/Gaan: .*Sanne/.test(await tekst(p)), "aanmelding voor evenement opgeslagen");
+
+// 13. Shiftleider vult openingschecklist in
+p = await als("u-yara");
+await p.goto(`${BASE}/app/checklist/cl-openen`, { waitUntil: "networkidle0" });
+await p.evaluate(() => [...document.querySelectorAll("button")].filter((b) => b.innerText.trim() === "Ja").forEach((b) => b.click()));
+await p.evaluate(() => [...document.querySelectorAll('input[type="number"]')].forEach((i) => { const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set; set.call(i, "3"); i.dispatchEvent(new Event("input", { bubbles: true })); }));
+await new Promise((r) => setTimeout(r, 300));
+await klikTekst(p, "Afronden");
+await p.waitForFunction(() => location.pathname.endsWith("/app/werk/taken"), { timeout: 8000 });
+ok((await tekst(p)).includes("Gedaan door Yara"), "dagchecklist afgerond en zichtbaar bij Taken");
+
+// 14. HQ voert een evaluatie uit met knock-out
+p = await als("u-lisa");
+await p.goto(`${BASE}/app/checklist/cl-evaluatie?v=v-markt`, { waitUntil: "networkidle0" });
+await p.evaluate(() => {
+  [...document.querySelectorAll("button")].filter((b) => b.innerText.trim() === "Ja").forEach((b) => b.click());
+  [...document.querySelectorAll("button")].filter((b) => b.innerText.trim() === "4").forEach((b) => b.click());
+  const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+  [...document.querySelectorAll('input[type="number"]')].forEach((i) => { set.call(i, "2"); i.dispatchEvent(new Event("input", { bubbles: true })); });
+});
+await new Promise((r) => setTimeout(r, 200));
+// koelcel te warm = knock-out
+await p.evaluate(() => {
+  const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+  const i = document.querySelector('input[type="number"]'); set.call(i, "9"); i.dispatchEvent(new Event("input", { bubbles: true }));
+});
+await new Promise((r) => setTimeout(r, 300));
+ok(/Knock-out: direct actie nodig/.test(await tekst(p)), "knock-out zichtbaar tijdens invullen");
+await klikTekst(p, "Afronden");
+await p.waitForFunction(() => /\/app\/evaluaties\//.test(location.pathname), { timeout: 8000 });
+await p.type('input[name="tekst"]', "E2E: koelcel laten nakijken");
+await klikTekst(p, "Actiepunt toevoegen");
+await p.waitForFunction(() => document.body.innerText.includes("E2E: koelcel"), { timeout: 8000 });
+ok(true, "evaluatie met knock-out afgerond en actiepunt toegevoegd");
+
+// 15. Beheer: betrokkenheid en evaluaties
+await p.setViewport({ width: 1300, height: 900 });
+await p.goto(`${BASE}/beheer/evaluaties`, { waitUntil: "networkidle0" });
+ok((await tekst(p)).includes("E2E: koelcel"), "actiepunt zichtbaar in beheer › evaluaties");
+await p.goto(`${BASE}/beheer/betrokkenheid`, { waitUntil: "networkidle0" });
+ok(/eNPS/.test(await tekst(p)), "beheer › betrokkenheid toont eNPS");
+await p.type('input[name="titel"]', "E2E poll");
+await p.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.innerText === "Poll")?.click());
+await p.type('input[name="vraag"]', "Welke saus?");
+await p.type('textarea[name="opties"]', "Knoflook\nSambal");
+await klikTekst(p, "Versturen");
+await p.waitForFunction(() => document.body.innerText.includes("Staat bij iedereen"), { timeout: 8000 });
+p = await als("u-tim");
+await p.goto(`${BASE}/app/enquetes`, { waitUntil: "networkidle0" });
+ok((await tekst(p)).includes("E2E poll"), "nieuwe poll van HQ zichtbaar bij medewerker");
 
 await browser.close();
 console.log(fouten.length ? `\nFOUTEN:\n${fouten.join("\n")}` : "\nAlle flows OK");

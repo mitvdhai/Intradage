@@ -75,7 +75,8 @@ export function Rij({
 }
 
 export function Kaart({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cx("rounded-2xl border border-line bg-white p-4", className)}>{children}</div>;
+  // Een eigen achtergrond (bg-…) in className vervangt het standaard wit.
+  return <div className={cx("rounded-2xl border border-line p-4", !/(^|\s)bg-/.test(className ?? "") && "bg-white", className)}>{children}</div>;
 }
 
 export function Voortgang({ pct, rood }: { pct: number; rood?: boolean }) {

@@ -12,7 +12,7 @@ export default async function Rooster({ searchParams }: PageProps<"/app/werk">) 
   const { aanbieden } = await searchParams;
   const kiesModus = aanbieden === "1";
   const { u, org } = await vereisGebruiker();
-  if (u.rol === "franchisenemer") redirect("/app/werk/documenten");
+  if (u.rol === "franchisenemer") redirect("/app/werk/taken");
   const nu = new Date();
   const eigen = await staff.rooster(u, nu, new Date(nu.getTime() + 14 * 86400000));
 

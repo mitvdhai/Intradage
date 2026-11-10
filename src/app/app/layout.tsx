@@ -12,8 +12,8 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
     { href: "/app", label: "Home", icoon: "home", badge: open },
     { href: "/app/chat", label: "Chat", icoon: "chat" },
     isLeiding(u) ? { href: "/app/team", label: "Team", icoon: "team" } : { href: "/app/leren", label: "Leren", icoon: "leren" },
-    { href: "/app/handboek", label: "Handboek", icoon: "handboek" },
     { href: "/app/werk", label: "Mijn werk", icoon: "werk" },
+    { href: "/app/meer", label: "Meer", icoon: "meer" },
   ];
   return (
     <div className="min-h-screen bg-canvas">

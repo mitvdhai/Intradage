@@ -35,7 +35,9 @@ function naarBericht(r: BerichtRij): Bericht {
     gepubliceerd: r.gepubliceerd.toISOString(), vervalt: iso(r.vervalt), handboekDocId: r.handboekDocId ?? undefined,
     afzender: r.afzenderType === "hq"
       ? { type: "hq", discipline: r.afzenderDiscipline ?? "operations" }
-      : { type: "fn", franchisenemerId: r.afzenderFranchisenemerId ?? "", naam: r.afzenderNaam ?? "Franchisenemer" },
+      : r.afzenderType === "medewerker"
+        ? { type: "medewerker", gebruikerId: r.afzenderGebruikerId ?? "", naam: r.afzenderNaam ?? "Collega" }
+        : { type: "fn", franchisenemerId: r.afzenderFranchisenemerId ?? "", naam: r.afzenderNaam ?? "Franchisenemer" },
   };
 }
 
@@ -260,7 +262,7 @@ export async function auditLog(limiet = 200): Promise<AuditRegel[]> {
 
 // ---------- Te doen ----------
 
-export interface TeDoe { id: string; titel: string; sub: string; href: string; urgent?: boolean; pct?: number; soort: "bericht" | "leren" | "beoordelen" | "ruil" | "zelfbeoordeling" }
+export interface TeDoe { id: string; titel: string; sub: string; href: string; urgent?: boolean; pct?: number; soort: "bericht" | "leren" | "beoordelen" | "ruil" | "zelfbeoordeling" | "enquete" | "actiepunt" | "beloning" }
 
 /** Wat moet deze gebruiker nu doen? Basis voor "Te doen", de badge en het meldingencentrum. */
 export async function teDoen(org: Org, u: Gebruiker): Promise<TeDoe[]> {
@@ -272,6 +274,24 @@ export async function teDoen(org: Org, u: Gebruiker): Promise<TeDoe[]> {
   if (ob && ob.klaar < ob.totaal) lijst.push({ id: "onboarding", titel: "Onboarding", sub: `${ob.klaar} van ${ob.totaal} klaar`, href: "/app/leren", pct: ob.pct, soort: "leren" });
   const zelf = eigen.find((b) => b.status === "zelfbeoordeling");
   if (zelf) lijst.push({ id: "zelf", titel: "Zelfbeoordeling invullen", sub: `Beoordeling ${zelf.periode}`, href: "/app/werk/functie/zelfbeoordeling", soort: "zelfbeoordeling" });
+
+  // Open enquêtes (niet de ideeënbox) en eigen actiepunten
+  const db = await getDb();
+  const nu = new Date();
+  const [enq, deelname, acties] = await Promise.all([
+    db.select().from(t.enquete),
+    db.select().from(t.enqueteDeelname).where(eq(t.enqueteDeelname.gebruikerId, u.id)),
+    db.select().from(t.actiepunt).where(and(eq(t.actiepunt.eigenaarId, u.id), eq(t.actiepunt.status, "open"))),
+  ]);
+  const gedaan = new Set(deelname.map((d) => d.enqueteId));
+  for (const e of enq) {
+    if (e.type === "idee" || gedaan.has(e.id) || e.opent > nu || (e.sluit && e.sluit < nu) || !inDoelgroep(org, u, e.doelgroep)) continue;
+    lijst.push({ id: `e-${e.id}`, titel: e.titel, sub: e.type === "poll" ? "Poll · stem mee" : "Korte vraag · anoniem", href: `/app/enquetes/${e.id}`, soort: "enquete" });
+  }
+  for (const a of acties) {
+    const telaat = a.deadline < nu.toISOString().slice(0, 10);
+    lijst.push({ id: `a-${a.id}`, titel: a.tekst, sub: `Actiepunt · ${telaat ? "te laat, " : ""}deadline ${new Date(a.deadline).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}`, href: a.uitvoeringId ? `/app/evaluaties/${a.uitvoeringId}` : "/app/evaluaties", urgent: telaat, soort: "actiepunt" });
+  }
 
   if (isLeiding(u)) {
     const team = teamVan(org, u).map((x) => x.id);

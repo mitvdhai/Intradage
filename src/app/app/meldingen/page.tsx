@@ -1,9 +1,9 @@
-import { Cake, CheckCircle2, ClipboardCheck, GraduationCap, Repeat, Star, UserCheck } from "lucide-react";
+import { Cake, Repeat, Star } from "lucide-react";
+import { TE_DOEN_ICOON as ICOON } from "@/components/te-doen";
 import { Leeg, Lijst, PageTop, Rij, Sectie, Segmenten, tijdLabel } from "@/components/ui";
 import { feedbackVoor, leerItemsVoor, ruilverzoeken, teDoen, verjaardagenBinnenkort, voornaamVan } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
 
-const ICOON = { bericht: CheckCircle2, leren: GraduationCap, beoordelen: ClipboardCheck, ruil: Repeat, zelfbeoordeling: UserCheck };
 
 export default async function Meldingen({ searchParams }: PageProps<"/app/meldingen">) {
   const { filter } = await searchParams;

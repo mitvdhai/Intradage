@@ -65,4 +65,58 @@ await foto(p, "/beheer/functiehuis", "22-beheer-functiehuis");
 await foto(p, "/beheer/beoordelingen", "23-beheer-beoordelingen");
 await foto(p, "/beheer/regeling", "24-beheer-regeling");
 
+// Overige schermen van het basisplatform
+p = await pagina("u-sanne");
+await foto(p, "/app/leren/l-frituur", "14-quiz");
+await foto(p, "/app/leren/l-puntzak", "15-challenge");
+await foto(p, "/app/meldingen", "16-meldingen");
+await foto(p, "/app/berichten", "17-nieuws");
+await foto(p, "/app/chat", "18-chats");
+p = await pagina("u-daan");
+await foto(p, "/app/werk/functie/zelfbeoordeling", "19-zelfbeoordeling");
+p = await pagina("u-erik");
+await foto(p, "/app/team/inzendingen", "25-inzendingen");
+
+// Betrokkenheid en operatie
+const naar = (y) => async (q) => { await q.evaluate((yy) => window.scrollTo(0, yy), y); await new Promise((r) => setTimeout(r, 200)); };
+p = await pagina("u-sanne");
+await foto(p, "/app", "26-tijdlijn", naar(560));
+await foto(p, "/app/meer", "27-meer");
+await foto(p, "/app/waardering", "28-waardering");
+await foto(p, "/app/waardering/geven?aan=u-daan", "29-waardering-geven", async (q) => {
+  await q.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.innerText.includes("Samen"))?.click());
+  await q.type('textarea[name="tekst"]', "Dank je dat je zaterdag mijn dienst overnam!");
+});
+await foto(p, "/app/beloningen", "30-beloningen");
+await foto(p, "/app/enquetes", "31-enquetes");
+await foto(p, "/app/enquetes/e-pulse", "32-pulse");
+await foto(p, "/app/evenementen", "33-evenementen");
+await foto(p, "/app/smoelenboek", "34-smoelenboek");
+await foto(p, "/app/smoelenboek/u-yara", "35-profiel-collega");
+await foto(p, "/app/werk/taken", "36-taken");
+p = await pagina("u-yara");
+await foto(p, "/app/checklist/cl-openen", "37-checklist", async (q) => {
+  await q.evaluate(() => {
+    [...document.querySelectorAll("button")].filter((b) => b.innerText.trim() === "Ja").slice(0, 2).forEach((b) => b.click());
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+    const i = document.querySelector('input[type="number"]'); set.call(i, "4"); i.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await new Promise((r) => setTimeout(r, 200));
+});
+p = await pagina("u-lisa");
+await foto(p, "/app/evaluaties", "38-evaluaties");
+await foto(p, "/app/evaluaties/ui-s1", "39-evaluatie-detail");
+await foto(p, "/app/checklist/cl-evaluatie?v=v-markt", "40-evaluatie-invullen", async (q) => {
+  await q.evaluate(() => {
+    [...document.querySelectorAll("button")].filter((b) => b.innerText.trim() === "Ja").forEach((b) => b.click());
+    [...document.querySelectorAll("button")].filter((b) => b.innerText.trim() === "4").forEach((b) => b.click());
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+    [...document.querySelectorAll('input[type="number"]')].forEach((i, n) => { set.call(i, n === 0 ? "9" : "5"); i.dispatchEvent(new Event("input", { bubbles: true })); });
+  });
+  await new Promise((r) => setTimeout(r, 300));
+});
+p = await pagina("u-joost", true);
+await foto(p, "/beheer/betrokkenheid", "41-beheer-betrokkenheid");
+await foto(p, "/beheer/evaluaties", "42-beheer-evaluaties");
+
 await browser.close();

@@ -54,5 +54,11 @@ async function seedAlsLeeg(db: DB) {
     await tx.execute(sql`select pg_advisory_xact_lock(7420131)`);
     const [{ n }] = (await tx.execute<{ n: number }>(sql`select count(*)::int as n from gebruiker`)).rows;
     if (n === 0) await seed(tx as unknown as DB);
+    // Nieuwe modules op een bestaande database: alleen hun eigen demodata laden
+    const [{ w }] = (await tx.execute<{ w: number }>(sql`select count(*)::int as w from waarde`)).rows;
+    if (w === 0) {
+      const { seedBetrokkenheid } = await import("./seed-betrokkenheid");
+      await seedBetrokkenheid(tx as unknown as DB);
+    }
   });
 }

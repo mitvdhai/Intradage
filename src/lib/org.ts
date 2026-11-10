@@ -42,7 +42,7 @@ export const getOrg = cache(async (): Promise<Org> => {
     id: g.id, voornaam: g.voornaam, achternaam: g.achternaam, rol: g.rol,
     functieId: g.functieId ?? undefined, franchisenemerId: g.franchisenemerId ?? undefined, discipline: g.discipline ?? undefined,
     vestigingIds: vestPer.get(g.id) ?? [], mobiel: g.mobiel, inDienstSinds: g.inDienstSinds,
-    verjaardag: g.verjaardag ?? undefined, toonVerjaardag: g.toonVerjaardag, personeelsnummer: g.personeelsnummer,
+    verjaardag: g.verjaardag ?? undefined, toonVerjaardag: g.toonVerjaardag, personeelsnummer: g.personeelsnummer, overMij: g.overMij ?? undefined,
   }));
 
   const profielItems: ProfielItem[] = items.map((i) => ({ ...i, niveaus: i.niveaus as ProfielItem["niveaus"] }));

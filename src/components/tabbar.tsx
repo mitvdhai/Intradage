@@ -2,14 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, GraduationCap, Home, MessageCircle, User, Users } from "lucide-react";
+import { BookOpen, Briefcase, GraduationCap, Home, LayoutGrid, MessageCircle, User, Users } from "lucide-react";
 
-const ICONEN = { home: Home, chat: MessageCircle, leren: GraduationCap, team: Users, handboek: BookOpen, werk: User };
+const ICONEN = { home: Home, chat: MessageCircle, leren: GraduationCap, team: Users, handboek: BookOpen, werk: Briefcase, meer: LayoutGrid, profiel: User };
 export type TabIcoon = keyof typeof ICONEN;
 
 export function TabBar({ tabs }: { tabs: { href: string; label: string; icoon: TabIcoon; badge?: number }[] }) {
   const pad = usePathname();
-  const actief = (href: string) => (href === "/app" ? pad === "/app" || pad.startsWith("/app/berichten") || pad.startsWith("/app/meldingen") : pad.startsWith(href));
+  const MEER = ["/app/meer", "/app/handboek", "/app/waardering", "/app/beloningen", "/app/enquetes", "/app/evenementen", "/app/smoelenboek", "/app/evaluaties"];
+  const actief = (href: string) =>
+    href === "/app" ? pad === "/app" || pad.startsWith("/app/berichten") || pad.startsWith("/app/meldingen")
+      : href === "/app/meer" ? MEER.some((m) => pad.startsWith(m))
+        : pad.startsWith(href);
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-md border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
       <ul className="grid grid-cols-5">

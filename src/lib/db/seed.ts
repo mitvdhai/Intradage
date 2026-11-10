@@ -8,6 +8,12 @@ const d = (iso: string) => new Date(iso);
 
 /** Laadt de demodata. Verwacht een lege database. */
 export async function seed(db: DB) {
+  await seedKern(db);
+  const { seedBetrokkenheid } = await import("./seed-betrokkenheid");
+  await seedBetrokkenheid(db);
+}
+
+async function seedKern(db: DB) {
   await db.insert(t.regio).values(s.REGIO);
   await db.insert(t.franchisenemer).values(s.FRANCHISENEMERS);
   await db.insert(t.vestiging).values(s.VESTIGINGEN);
@@ -62,7 +68,8 @@ export async function seed(db: DB) {
 
 /** Alle tabellen leegmaken (voor "demodata herstellen" en tests). */
 export async function leegmaken(db: DB) {
-  await db.execute(sql`truncate table audit_log, medewerker_niveau, beoordeling_score, beoordeling, beloningsregeling, ontgrendeling, document,
+  await db.execute(sql`truncate table actiepunt, checklist_uitvoering, checklist_sjabloon, evenement_aanmelding, evenement,
+    enquete_antwoord, enquete_deelname, enquete, beloning_aanvraag, beloning, waardering, waarde, "like", audit_log, medewerker_niveau, beoordeling_score, beoordeling, beloningsregeling, ontgrendeling, document,
     leer_voortgang, leer_item, ruilverzoek, chat_bericht, chat_groep, reactie, bericht_status, bericht, handboek_doc, salaris,
     gebruiker_vestiging, gebruiker, functie_profiel, profiel_item, functie, vestiging, franchisenemer, regio restart identity cascade`);
 }
