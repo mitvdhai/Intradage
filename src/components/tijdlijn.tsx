@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Award, Cake, Heart, MessageCircle, PartyPopper, Sparkles, Trash2 } from "lucide-react";
-import { toggleLike, verwijderPost } from "@/lib/acties-betrokkenheid";
+import { Award, Cake, MessageCircle, PartyPopper, Sparkles, Trash2 } from "lucide-react";
+import { verwijderPost } from "@/lib/acties-betrokkenheid";
+import { SausjeKnop } from "./sausje";
 import type { TijdlijnItem } from "@/lib/betrokkenheid";
 import { afzenderLabel, DISCIPLINE_LABEL, vestigingNaam } from "@/lib/data";
 import type { Org } from "@/lib/org";
@@ -10,16 +11,6 @@ import { cx, tijdLabel } from "./ui";
 function Avatar({ naam, toon = "navy", groot }: { naam: string; toon?: "navy" | "rood" | "hq"; groot?: boolean }) {
   const cls = toon === "rood" ? "bg-brand-600 text-white" : toon === "hq" ? "bg-navy-700 text-white" : "bg-navy-100 text-navy-700";
   return <span className={cx("grid shrink-0 place-items-center rounded-full font-semibold", groot ? "h-11 w-11 text-base" : "h-9 w-9 text-sm", cls)}>{naam.slice(0, 1)}</span>;
-}
-
-function LikeKnop({ type, id, aantal, geliked }: { type: "bericht" | "waardering"; id: string; aantal: number; geliked: boolean }) {
-  return (
-    <form action={toggleLike.bind(null, type, id)}>
-      <button className={cx("tap inline-flex items-center gap-1.5 rounded-lg px-2 text-[13px] font-semibold", geliked ? "text-brand-600" : "text-muted")} aria-pressed={geliked}>
-        <Heart size={17} fill={geliked ? "currentColor" : "none"} /> {aantal > 0 ? aantal : ""} <span className="sr-only">Vind ik leuk</span>
-      </button>
-    </form>
-  );
 }
 
 const voor = (org: Org, id: string) => org.gebruikers.find((g) => g.id === id);
@@ -44,7 +35,7 @@ export function TijdlijnKaart({ item, org, u }: { item: TijdlijnItem; org: Org; 
           <p className="line-clamp-4 whitespace-pre-line text-[15px] leading-relaxed text-ink">{b.inhoud.replace(/^- /gm, "• ")}</p>
         </Link>
         <div className="flex items-center gap-1 border-t border-line px-2 py-0.5">
-          <LikeKnop type="bericht" id={b.id} aantal={item.likes} geliked={item.geliked} />
+          <SausjeKnop type="bericht" id={b.id} aantal={item.likes} gegeven={item.geliked} />
           <Link href={`/app/berichten/${b.id}`} className="tap inline-flex items-center gap-1.5 rounded-lg px-2 text-[13px] font-semibold text-muted"><MessageCircle size={17} /> {item.reacties > 0 ? item.reacties : ""}</Link>
           {magVerwijderen && <form action={verwijderPost.bind(null, b.id)} className="ml-auto"><button className="tap rounded-lg px-2 text-muted" aria-label="Verwijderen"><Trash2 size={16} /></button></form>}
         </div>
@@ -63,7 +54,7 @@ export function TijdlijnKaart({ item, org, u }: { item: TijdlijnItem; org: Org; 
         </Link>
         <p className="px-4 pb-2 pt-2 text-[15px] leading-relaxed">“{w.tekst}”</p>
         <div className="flex items-center border-t border-line px-2 py-0.5">
-          <LikeKnop type="waardering" id={w.id} aantal={item.likes} geliked={item.geliked} />
+          <SausjeKnop type="waardering" id={w.id} aantal={item.likes} gegeven={item.geliked} />
           <Link href={`/app/waardering/geven?aan=${w.aanId}`} className="ml-auto mr-2 text-[13px] font-semibold text-navy-600">Ook waarderen</Link>
         </div>
       </article>
