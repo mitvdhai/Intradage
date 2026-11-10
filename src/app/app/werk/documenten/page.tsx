@@ -3,13 +3,11 @@ import { Ontgrendel } from "@/components/ontgrendel";
 import { WerkSegmenten } from "@/components/werk-segmenten";
 import { Lijst, PageTop, Rij, Sectie } from "@/components/ui";
 import { vereisGebruiker } from "@/lib/session";
-import { db } from "@/lib/store";
-import { nuMs } from "@/lib/tijd";
+import { documentenVan, isOntgrendeld } from "@/lib/data";
 
 export default async function Documenten() {
-  const u = await vereisGebruiker();
-  const open = (db.ontgrendeld[u.id] ?? 0) > nuMs();
-  const docs = db.documenten.filter((d) => d.gebruikerId === u.id);
+  const { u } = await vereisGebruiker();
+  const [open, docs] = await Promise.all([isOntgrendeld(u.id), documentenVan(u.id)]);
   const loon = docs.filter((d) => d.type === "loonstrook").sort((a, b) => b.datum.localeCompare(a.datum));
   const contract = docs.filter((d) => d.type === "contract");
   const datum = (iso: string) => new Date(iso).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });

@@ -2,17 +2,16 @@ import { redirect } from "next/navigation";
 import { NiveauKiezer } from "@/components/niveau-kiezer";
 import { Knop, PageTop, Sectie } from "@/components/ui";
 import { slaZelfbeoordelingOp } from "@/lib/acties";
-import { functieVan } from "@/lib/data";
+import { beoordelingen, functieVan } from "@/lib/data";
 import { CATEGORIEEN, CATEGORIE_LABEL } from "@/lib/functiehuis/score";
 import { vereisGebruiker } from "@/lib/session";
-import { db, profielItemMap } from "@/lib/store";
 
 export default async function Zelfbeoordeling() {
-  const u = await vereisGebruiker();
-  const f = functieVan(u);
-  const b = db.beoordelingen.find((x) => x.gebruikerId === u.id && x.status === "zelfbeoordeling");
+  const { u, org } = await vereisGebruiker();
+  const f = functieVan(org, u);
+  const b = (await beoordelingen({ gebruikerIds: [u.id] })).find((x) => x.status === "zelfbeoordeling");
   if (!f || !b) redirect("/app/werk/functie");
-  const items = profielItemMap();
+  const items = org.itemMap;
 
   return (
     <>

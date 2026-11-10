@@ -7,7 +7,7 @@ import { DISCIPLINE_LABEL } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
 
 export default async function BeheerLayout({ children }: LayoutProps<"/beheer">) {
-  const u = await vereisGebruiker();
+  const { u } = await vereisGebruiker();
   if (!magBeheer(u)) redirect("/app");
   return (
     <div className="flex min-h-screen bg-canvas">

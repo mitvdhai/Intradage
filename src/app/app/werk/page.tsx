@@ -3,28 +3,30 @@ import { CalendarDays, ExternalLink, Repeat } from "lucide-react";
 import { WerkSegmenten } from "@/components/werk-segmenten";
 import { Label, Lijst, PageTop, Rij, Sectie, dagLabel, tijdLabel, uurLabel } from "@/components/ui";
 import { biedDienstAan } from "@/lib/acties";
-import { vestigingNaam, voornaamVan } from "@/lib/data";
+import { ruilverzoeken, vestigingNaam, voornaamVan } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
-import { db, staff } from "@/lib/store";
+import { staff } from "@/lib/staff/adapter";
 import type { Dienst } from "@/lib/types";
 
 export default async function Rooster({ searchParams }: PageProps<"/app/werk">) {
   const { aanbieden } = await searchParams;
   const kiesModus = aanbieden === "1";
-  const u = await vereisGebruiker();
+  const { u, org } = await vereisGebruiker();
   if (u.rol === "franchisenemer") redirect("/app/werk/documenten");
   const nu = new Date();
   const eigen = await staff.rooster(u, nu, new Date(nu.getTime() + 14 * 86400000));
 
   // Overgenomen diensten (na akkoord) tonen we ook, tot HorecaManager is bijgewerkt
   const overgenomen: Dienst[] = [];
-  for (const r of db.ruilverzoeken.filter((x) => x.overgenomenDoor === u.id && x.status !== "afgewezen")) {
-    const van = db.gebruikers.find((g) => g.id === r.aangebodenDoor)!;
+  const ruilen = await ruilverzoeken();
+  for (const r of ruilen.filter((x) => x.overgenomenDoor === u.id && x.status !== "afgewezen")) {
+    const van = org.gebruikers.find((g) => g.id === r.aangebodenDoor);
+    if (!van) continue;
     const d = (await staff.rooster(van, nu, new Date(nu.getTime() + 30 * 86400000))).find((x) => x.id === r.dienstId);
     if (d) overgenomen.push(d);
   }
   const diensten = [...eigen, ...overgenomen].sort((a, b) => a.start.localeCompare(b.start));
-  const ruilVan = (d: Dienst) => db.ruilverzoeken.find((r) => r.dienstId === d.id && r.status !== "afgewezen");
+  const ruilVan = (d: Dienst) => ruilen.find((r) => r.dienstId === d.id && r.status !== "afgewezen");
   const eindWeek = new Date(nu); eindWeek.setDate(nu.getDate() + (7 - nu.getDay()) % 7); eindWeek.setHours(23, 59);
   const groepen = [
     { titel: "Deze week", lijst: diensten.filter((d) => new Date(d.start) <= eindWeek) },
@@ -45,10 +47,10 @@ export default async function Rooster({ searchParams }: PageProps<"/app/werk">) 
               return (
                 <Rij key={d.id} toon={r ? "rood" : eerste ? "navy" : "grijs"} icoon={r ? <Repeat size={18} /> : <CalendarDays size={18} />}
                   titel={<span className="capitalize">{dagLabel(d.start)}</span>}
-                  sub={`${uurLabel(d.start)} – ${uurLabel(d.eind)} · ${d.taak} · ${vestigingNaam(d.vestigingId)}`}
+                  sub={`${uurLabel(d.start)} – ${uurLabel(d.eind)} · ${d.taak} · ${vestigingNaam(org, d.vestigingId)}`}
                   onderaan={r ? <div className="mt-1 text-[12px] font-medium text-brand-700">
-                    {!vanMij ? `Overgenomen van ${voornaamVan(d.gebruikerId)} · ${r.status === "goedgekeurd" ? "goedgekeurd" : "wacht op akkoord"}` :
-                      r.status === "open" ? "Aangeboden in de teamchat" : r.status === "wacht-op-akkoord" ? `${voornaamVan(r.overgenomenDoor!)} neemt over · wacht op akkoord` : `Overgenomen door ${voornaamVan(r.overgenomenDoor!)}`}
+                    {!vanMij ? `Overgenomen van ${voornaamVan(org, d.gebruikerId)} · ${r.status === "goedgekeurd" ? "goedgekeurd" : "wacht op akkoord"}` :
+                      r.status === "open" ? "Aangeboden in de teamchat" : r.status === "wacht-op-akkoord" ? `${voornaamVan(org, r.overgenomenDoor!)} neemt over · wacht op akkoord` : `Overgenomen door ${voornaamVan(org, r.overgenomenDoor!)}`}
                   </div> : undefined}
                   rechts={kiesModus && !r && vanMij ? (
                     <form action={biedDienstAan.bind(null, d.id)}><button className="rounded-lg bg-brand-600 px-2.5 py-1.5 text-[12px] font-semibold text-white">Aanbieden</button></form>

@@ -10,7 +10,7 @@ export interface StaffAdapter {
   /** Diensten van één medewerker in een periode */
   rooster(gebruiker: Gebruiker, van: Date, tot: Date): Promise<Dienst[]>;
   /** Wie werkt er in dezelfde dienst (alleen voornamen tonen in de UI) */
-  collegas(dienst: Dienst): Promise<string[]>;
+  collegas(dienst: Dienst, gebruikers: Gebruiker[]): Promise<string[]>;
   /** Kan een goedgekeurde ruil direct worden teruggeschreven? */
   ondersteuntSchrijven: boolean;
   laatsteSync(): Date;
@@ -44,8 +44,6 @@ export class MockStaffAdapter implements StaffAdapter {
   naam = "HorecaManager (demo)";
   ondersteuntSchrijven = false;
   private sync = new Date();
-
-  constructor(private alleGebruikers: () => Gebruiker[]) {}
 
   laatsteSync() {
     return this.sync;
@@ -84,10 +82,10 @@ export class MockStaffAdapter implements StaffAdapter {
       .sort((a, b) => a.start.localeCompare(b.start));
   }
 
-  async collegas(dienst: Dienst): Promise<string[]> {
+  async collegas(dienst: Dienst, gebruikers: Gebruiker[]): Promise<string[]> {
     const dag = dienst.start.slice(0, 10);
     const uit: string[] = [];
-    for (const g of this.alleGebruikers()) {
+    for (const g of gebruikers) {
       if (g.id === dienst.gebruikerId || !g.vestigingIds.includes(dienst.vestigingId)) continue;
       if (g.rol === "franchisenemer" || g.rol === "hq") continue;
       const r = await this.rooster(g, new Date(dag), new Date(new Date(dag).getTime() + 86400000));
@@ -96,3 +94,7 @@ export class MockStaffAdapter implements StaffAdapter {
     return uit;
   }
 }
+
+const g = globalThis as unknown as { __staff?: StaffAdapter };
+/** De actieve koppeling. Later: HttpStaffAdapter als STAFF_API_URL is gezet. */
+export const staff: StaffAdapter = (g.__staff ??= new MockStaffAdapter());

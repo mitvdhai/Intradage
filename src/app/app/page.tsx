@@ -3,19 +3,18 @@ import { Bell, Cake, CheckCircle2, ClipboardCheck, GraduationCap, Megaphone, Rep
 import { Label, Lijst, Rij, Sectie, Voortgang, tijdLabel, uurLabel } from "@/components/ui";
 import { afzenderLabel, berichtenVoor, isBevestigd, isGelezen, teDoen, vestigingNaam, verjaardagenBinnenkort } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
-import { staff } from "@/lib/store";
-import { nuMs } from "@/lib/tijd";
+import { staff } from "@/lib/staff/adapter";
+import { dagenVanaf } from "@/lib/tijd";
 
 const ICOON = { bericht: CheckCircle2, leren: GraduationCap, beoordelen: ClipboardCheck, ruil: Repeat, zelfbeoordeling: UserCheck };
 
 export default async function Home() {
-  const u = await vereisGebruiker();
-  const taken = teDoen(u);
-  const nieuws = berichtenVoor(u).filter((b) => isBevestigd(b, u)).slice(0, 3);
-  const rooster = await staff.rooster(u, new Date(), new Date(nuMs() + 14 * 86400000));
+  const { u, org } = await vereisGebruiker();
+  const [taken, berichten, rooster] = await Promise.all([teDoen(org, u), berichtenVoor(org, u), staff.rooster(u, new Date(), dagenVanaf(14))]);
+  const nieuws = berichten.filter(isBevestigd).slice(0, 3);
   const volgende = rooster.find((d) => new Date(d.eind) > new Date());
-  const collegas = volgende ? await staff.collegas(volgende) : [];
-  const jarig = verjaardagenBinnenkort(u).filter((j) => j.g.id !== u.id);
+  const collegas = volgende ? await staff.collegas(volgende, org.gebruikers) : [];
+  const jarig = verjaardagenBinnenkort(org, u).filter((j) => j.g.id !== u.id);
   const uur = new Date().getHours();
   const groet = uur < 12 ? "Goedemorgen" : uur < 18 ? "Goedemiddag" : "Goedenavond";
 
@@ -37,7 +36,7 @@ export default async function Home() {
           <Link href="/app/werk" className="block overflow-hidden rounded-2xl bg-navy-700 p-4 text-white shadow-sm">
             <div className="text-[12px] font-semibold uppercase tracking-wider text-navy-200">Volgende dienst · {new Date(volgende.start).toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "short" })}</div>
             <div className="mt-1 text-3xl font-bold tracking-tight">{uurLabel(volgende.start)} – {uurLabel(volgende.eind)}</div>
-            <div className="mt-1 text-sm text-navy-100">{vestigingNaam(volgende.vestigingId)} · {volgende.taak}{collegas.length ? ` · met ${collegas.join(", ")}` : ""}</div>
+            <div className="mt-1 text-sm text-navy-100">{vestigingNaam(org, volgende.vestigingId)} · {volgende.taak}{collegas.length ? ` · met ${collegas.join(", ")}` : ""}</div>
             <div className="mt-3 h-1 w-12 rounded-full bg-brand-500" />
           </Link>
         </div>
@@ -59,9 +58,9 @@ export default async function Home() {
       <Sectie titel="Nieuws" rechts={<Link href="/app/berichten">Alles</Link>}>
         <Lijst>
           {nieuws.map((b) => (
-            <Rij key={b.id} href={`/app/berichten/${b.id}`} icoon={<Megaphone size={18} />} toon={isGelezen(b, u) ? "grijs" : "navy"}
+            <Rij key={b.id} href={`/app/berichten/${b.id}`} icoon={<Megaphone size={18} />} toon={isGelezen(b) ? "grijs" : "navy"}
               titel={b.titel} sub={`${afzenderLabel(b)} · ${tijdLabel(b.gepubliceerd)}`}
-              rechts={!isGelezen(b, u) ? <span className="h-2.5 w-2.5 rounded-full bg-brand-600" aria-label="Ongelezen" /> : undefined} />
+              rechts={!isGelezen(b) ? <span className="h-2.5 w-2.5 rounded-full bg-brand-600" aria-label="Ongelezen" /> : undefined} />
           ))}
         </Lijst>
       </Sectie>

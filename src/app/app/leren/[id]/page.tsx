@@ -4,19 +4,19 @@ import { TYPE_LABEL } from "@/components/leren";
 import { Quiz } from "@/components/quiz";
 import { Kaart, Knop, Lijst, PageTop, Rij, Sectie } from "@/components/ui";
 import { dienChallengeIn, rondLeerItemAf } from "@/lib/acties";
-import { leerItemsVoor, voornaamVan, voortgangVan } from "@/lib/data";
+import { alleHandboekDocs, leerItemsVoor, voornaamVan, voortgangVan } from "@/lib/data";
 import { vereisGebruiker } from "@/lib/session";
-import { db } from "@/lib/store";
 
 export default async function LeerItemPagina({ params }: PageProps<"/app/leren/[id]">) {
   const { id } = await params;
-  const u = await vereisGebruiker();
-  const item = leerItemsVoor(u).find((i) => i.id === id);
+  const { u, org } = await vereisGebruiker();
+  const item = (await leerItemsVoor(u)).find((i) => i.id === id);
   if (!item) notFound();
-  const v = voortgangVan(u.id, item.id);
-  const doc = item.handboekDocId ? db.handboek.find((d) => d.id === item.handboekDocId) : undefined;
-  const profielItem = item.profielItemId ? db.profielItems.find((p) => p.id === item.profielItemId) : undefined;
-  const inFunctie = profielItem && db.functies.find((f) => f.id === u.functieId)?.profiel.find((r) => r.itemId === profielItem.id);
+  const [vg, docs] = await Promise.all([voortgangVan(u.id), alleHandboekDocs()]);
+  const v = vg.get(item.id);
+  const doc = item.handboekDocId ? docs.find((d) => d.id === item.handboekDocId) : undefined;
+  const profielItem = item.profielItemId ? org.itemMap.get(item.profielItemId) : undefined;
+  const inFunctie = profielItem && org.functies.find((f) => f.id === u.functieId)?.profiel.find((r) => r.itemId === profielItem.id);
 
   return (
     <>
@@ -41,7 +41,7 @@ export default async function LeerItemPagina({ params }: PageProps<"/app/leren/[
       <Sectie>
         {v?.status === "afgerond" ? (
           <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-            <CheckCircle2 size={18} /> Afgerond{v.beoordeeldDoor ? ` · goedgekeurd door ${voornaamVan(v.beoordeeldDoor)}` : ""}{v.feedback ? ` · "${v.feedback}"` : ""}
+            <CheckCircle2 size={18} /> Afgerond{v.beoordeeldDoor ? ` · goedgekeurd door ${voornaamVan(org, v.beoordeeldDoor)}` : ""}{v.feedback ? ` · "${v.feedback}"` : ""}
           </div>
         ) : item.type === "quiz" && item.quiz ? (
           <Quiz itemId={item.id} vragen={item.quiz.map(({ vraag, opties }) => ({ vraag, opties }))} />

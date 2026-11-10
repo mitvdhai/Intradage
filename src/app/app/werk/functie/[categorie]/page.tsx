@@ -2,24 +2,22 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, GraduationCap, TrendingUp } from "lucide-react";
 import { Niveau, PageTop, Sectie } from "@/components/ui";
-import { functieVan, leerItemsVoor } from "@/lib/data";
+import { functieVan, huidigNiveau, leerItemsVoor } from "@/lib/data";
 import { CATEGORIEEN, CATEGORIE_LABEL } from "@/lib/functiehuis/score";
 import { vereisGebruiker } from "@/lib/session";
-import { db, profielItemMap } from "@/lib/store";
 import type { ProfielCategorie } from "@/lib/types";
 
 export default async function ProfielCategoriePagina({ params }: PageProps<"/app/werk/functie/[categorie]">) {
   const { categorie } = await params;
   if (!CATEGORIEEN.includes(categorie as ProfielCategorie)) notFound();
   const cat = categorie as ProfielCategorie;
-  const u = await vereisGebruiker();
-  const f = functieVan(u);
+  const { u, org } = await vereisGebruiker();
+  const f = functieVan(org, u);
   if (!f) notFound();
-  const items = profielItemMap();
-  const niveau = db.huidigNiveau[u.id] ?? {};
+  const items = org.itemMap;
+  const [niveau, leer] = await Promise.all([huidigNiveau(u.id), leerItemsVoor(u)]);
   const regels = f.profiel.filter((r) => items.get(r.itemId)?.categorie === cat).sort((a, b) => b.weging - a.weging);
   const w = regels.reduce((s, r) => s + r.weging, 0);
-  const leer = leerItemsVoor(u);
 
   return (
     <>
