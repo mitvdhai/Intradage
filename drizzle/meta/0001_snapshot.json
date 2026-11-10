@@ -1,0 +1,3376 @@
+{
+  "id": "6ca684b5-8645-4f6f-ac8b-276c0870ffc1",
+  "prevId": "c4ee75b7-d914-4274-85d9-57d1828a8dd7",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.actiepunt": {
+      "name": "actiepunt",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "uitvoering_id": {
+          "name": "uitvoering_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vestiging_id": {
+          "name": "vestiging_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tekst": {
+          "name": "tekst",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eigenaar_id": {
+          "name": "eigenaar_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deadline": {
+          "name": "deadline",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "actiepunt_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'open'"
+        },
+        "tijd": {
+          "name": "tijd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "actiepunt_vestiging_idx": {
+          "name": "actiepunt_vestiging_idx",
+          "columns": [
+            {
+              "expression": "vestiging_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "actiepunt_uitvoering_id_checklist_uitvoering_id_fk": {
+          "name": "actiepunt_uitvoering_id_checklist_uitvoering_id_fk",
+          "tableFrom": "actiepunt",
+          "tableTo": "checklist_uitvoering",
+          "columnsFrom": [
+            "uitvoering_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "actiepunt_vestiging_id_vestiging_id_fk": {
+          "name": "actiepunt_vestiging_id_vestiging_id_fk",
+          "tableFrom": "actiepunt",
+          "tableTo": "vestiging",
+          "columnsFrom": [
+            "vestiging_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "actiepunt_eigenaar_id_gebruiker_id_fk": {
+          "name": "actiepunt_eigenaar_id_gebruiker_id_fk",
+          "tableFrom": "actiepunt",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "eigenaar_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.audit_log": {
+      "name": "audit_log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tijd": {
+          "name": "tijd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actie": {
+          "name": "actie",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "details": {
+          "name": "details",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "audit_tijd_idx": {
+          "name": "audit_tijd_idx",
+          "columns": [
+            {
+              "expression": "tijd",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.beloning": {
+      "name": "beloning",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "titel": {
+          "name": "titel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "omschrijving": {
+          "name": "omschrijving",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "punten": {
+          "name": "punten",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "emoji": {
+          "name": "emoji",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actief": {
+          "name": "actief",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.beloning_aanvraag": {
+      "name": "beloning_aanvraag",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "beloning_id": {
+          "name": "beloning_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "punten": {
+          "name": "punten",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "beloning_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'aangevraagd'"
+        },
+        "behandeld_door": {
+          "name": "behandeld_door",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tijd": {
+          "name": "tijd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "beloning_aanvraag_beloning_id_beloning_id_fk": {
+          "name": "beloning_aanvraag_beloning_id_beloning_id_fk",
+          "tableFrom": "beloning_aanvraag",
+          "tableTo": "beloning",
+          "columnsFrom": [
+            "beloning_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "beloning_aanvraag_gebruiker_id_gebruiker_id_fk": {
+          "name": "beloning_aanvraag_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "beloning_aanvraag",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "beloning_aanvraag_behandeld_door_gebruiker_id_fk": {
+          "name": "beloning_aanvraag_behandeld_door_gebruiker_id_fk",
+          "tableFrom": "beloning_aanvraag",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "behandeld_door"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.beloningsregeling": {
+      "name": "beloningsregeling",
+      "schema": "",
+      "columns": {
+        "versie": {
+          "name": "versie",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "actief": {
+          "name": "actief",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "banden": {
+          "name": "banden",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "verhoging": {
+          "name": "verhoging",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "max_uitkomst_bij_ontbrekende_voorwaarde": {
+          "name": "max_uitkomst_bij_ontbrekende_voorwaarde",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gewijzigd": {
+          "name": "gewijzigd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.beoordeling": {
+      "name": "beoordeling",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "functie_id": {
+          "name": "functie_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "beoordelaar_id": {
+          "name": "beoordelaar_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "periode": {
+          "name": "periode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "beoordeling_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "toelichting": {
+          "name": "toelichting",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "besluit_percentage": {
+          "name": "besluit_percentage",
+          "type": "numeric(4, 1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "besluit_uurloon": {
+          "name": "besluit_uurloon",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "besluit_door": {
+          "name": "besluit_door",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "besluit_tijd": {
+          "name": "besluit_tijd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "besluit_toelichting": {
+          "name": "besluit_toelichting",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bijgewerkt": {
+          "name": "bijgewerkt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "beoordeling_beoordelaar_idx": {
+          "name": "beoordeling_beoordelaar_idx",
+          "columns": [
+            {
+              "expression": "beoordelaar_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "beoordeling_gebruiker_id_gebruiker_id_fk": {
+          "name": "beoordeling_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "beoordeling",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "beoordeling_functie_id_functie_id_fk": {
+          "name": "beoordeling_functie_id_functie_id_fk",
+          "tableFrom": "beoordeling",
+          "tableTo": "functie",
+          "columnsFrom": [
+            "functie_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "beoordeling_beoordelaar_id_gebruiker_id_fk": {
+          "name": "beoordeling_beoordelaar_id_gebruiker_id_fk",
+          "tableFrom": "beoordeling",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "beoordelaar_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "beoordeling_besluit_door_gebruiker_id_fk": {
+          "name": "beoordeling_besluit_door_gebruiker_id_fk",
+          "tableFrom": "beoordeling",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "besluit_door"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "beoordeling_per_periode": {
+          "name": "beoordeling_per_periode",
+          "nullsNotDistinct": false,
+          "columns": [
+            "gebruiker_id",
+            "periode"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.beoordeling_score": {
+      "name": "beoordeling_score",
+      "schema": "",
+      "columns": {
+        "beoordeling_id": {
+          "name": "beoordeling_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bron": {
+          "name": "bron",
+          "type": "score_bron",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "niveau": {
+          "name": "niveau",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "beoordeling_score_beoordeling_id_beoordeling_id_fk": {
+          "name": "beoordeling_score_beoordeling_id_beoordeling_id_fk",
+          "tableFrom": "beoordeling_score",
+          "tableTo": "beoordeling",
+          "columnsFrom": [
+            "beoordeling_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "beoordeling_score_item_id_profiel_item_id_fk": {
+          "name": "beoordeling_score_item_id_profiel_item_id_fk",
+          "tableFrom": "beoordeling_score",
+          "tableTo": "profiel_item",
+          "columnsFrom": [
+            "item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "beoordeling_score_beoordeling_id_item_id_bron_pk": {
+          "name": "beoordeling_score_beoordeling_id_item_id_bron_pk",
+          "columns": [
+            "beoordeling_id",
+            "item_id",
+            "bron"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "score_niveau": {
+          "name": "score_niveau",
+          "value": "\"beoordeling_score\".\"niveau\" between 1 and 4"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.bericht": {
+      "name": "bericht",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "titel": {
+          "name": "titel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "inhoud": {
+          "name": "inhoud",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "afzender_type": {
+          "name": "afzender_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "afzender_gebruiker_id": {
+          "name": "afzender_gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "afzender_discipline": {
+          "name": "afzender_discipline",
+          "type": "discipline",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "afzender_franchisenemer_id": {
+          "name": "afzender_franchisenemer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "afzender_naam": {
+          "name": "afzender_naam",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doelgroep": {
+          "name": "doelgroep",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "urgentie": {
+          "name": "urgentie",
+          "type": "urgentie",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vastgezet": {
+          "name": "vastgezet",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "gepubliceerd": {
+          "name": "gepubliceerd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "vervalt": {
+          "name": "vervalt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "handboek_doc_id": {
+          "name": "handboek_doc_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "bericht_gepubliceerd_idx": {
+          "name": "bericht_gepubliceerd_idx",
+          "columns": [
+            {
+              "expression": "gepubliceerd",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "bericht_afzender_gebruiker_id_gebruiker_id_fk": {
+          "name": "bericht_afzender_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "bericht",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "afzender_gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "bericht_afzender_franchisenemer_id_franchisenemer_id_fk": {
+          "name": "bericht_afzender_franchisenemer_id_franchisenemer_id_fk",
+          "tableFrom": "bericht",
+          "tableTo": "franchisenemer",
+          "columnsFrom": [
+            "afzender_franchisenemer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "bericht_handboek_doc_id_handboek_doc_id_fk": {
+          "name": "bericht_handboek_doc_id_handboek_doc_id_fk",
+          "tableFrom": "bericht",
+          "tableTo": "handboek_doc",
+          "columnsFrom": [
+            "handboek_doc_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.bericht_status": {
+      "name": "bericht_status",
+      "schema": "",
+      "columns": {
+        "bericht_id": {
+          "name": "bericht_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gelezen": {
+          "name": "gelezen",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bevestigd": {
+          "name": "bevestigd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "bericht_status_bericht_id_bericht_id_fk": {
+          "name": "bericht_status_bericht_id_bericht_id_fk",
+          "tableFrom": "bericht_status",
+          "tableTo": "bericht",
+          "columnsFrom": [
+            "bericht_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "bericht_status_gebruiker_id_gebruiker_id_fk": {
+          "name": "bericht_status_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "bericht_status",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "bericht_status_bericht_id_gebruiker_id_pk": {
+          "name": "bericht_status_bericht_id_gebruiker_id_pk",
+          "columns": [
+            "bericht_id",
+            "gebruiker_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.chat_bericht": {
+      "name": "chat_bericht",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "groep_id": {
+          "name": "groep_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tekst": {
+          "name": "tekst",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tijd": {
+          "name": "tijd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ruil_dienst_id": {
+          "name": "ruil_dienst_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "chat_groep_tijd_idx": {
+          "name": "chat_groep_tijd_idx",
+          "columns": [
+            {
+              "expression": "groep_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tijd",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "chat_bericht_groep_id_chat_groep_id_fk": {
+          "name": "chat_bericht_groep_id_chat_groep_id_fk",
+          "tableFrom": "chat_bericht",
+          "tableTo": "chat_groep",
+          "columnsFrom": [
+            "groep_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "chat_bericht_gebruiker_id_gebruiker_id_fk": {
+          "name": "chat_bericht_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "chat_bericht",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.chat_groep": {
+      "name": "chat_groep",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "naam": {
+          "name": "naam",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "chat_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vestiging_id": {
+          "name": "vestiging_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "franchisenemer_id": {
+          "name": "franchisenemer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "alleen_lezen": {
+          "name": "alleen_lezen",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "chat_groep_vestiging_id_vestiging_id_fk": {
+          "name": "chat_groep_vestiging_id_vestiging_id_fk",
+          "tableFrom": "chat_groep",
+          "tableTo": "vestiging",
+          "columnsFrom": [
+            "vestiging_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "chat_groep_franchisenemer_id_franchisenemer_id_fk": {
+          "name": "chat_groep_franchisenemer_id_franchisenemer_id_fk",
+          "tableFrom": "chat_groep",
+          "tableTo": "franchisenemer",
+          "columnsFrom": [
+            "franchisenemer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.checklist_sjabloon": {
+      "name": "checklist_sjabloon",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "titel": {
+          "name": "titel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "soort": {
+          "name": "soort",
+          "type": "checklist_soort",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "omschrijving": {
+          "name": "omschrijving",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "onderdelen": {
+          "name": "onderdelen",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rollen": {
+          "name": "rollen",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "versie": {
+          "name": "versie",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "actief": {
+          "name": "actief",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.checklist_uitvoering": {
+      "name": "checklist_uitvoering",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sjabloon_id": {
+          "name": "sjabloon_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sjabloon_versie": {
+          "name": "sjabloon_versie",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vestiging_id": {
+          "name": "vestiging_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uitgevoerd_door": {
+          "name": "uitgevoerd_door",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "datum": {
+          "name": "datum",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "antwoorden": {
+          "name": "antwoorden",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "score": {
+          "name": "score",
+          "type": "numeric(4, 1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "knockout": {
+          "name": "knockout",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "status": {
+          "name": "status",
+          "type": "uitvoering_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'concept'"
+        }
+      },
+      "indexes": {
+        "uitvoering_vestiging_idx": {
+          "name": "uitvoering_vestiging_idx",
+          "columns": [
+            {
+              "expression": "vestiging_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "datum",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "checklist_uitvoering_sjabloon_id_checklist_sjabloon_id_fk": {
+          "name": "checklist_uitvoering_sjabloon_id_checklist_sjabloon_id_fk",
+          "tableFrom": "checklist_uitvoering",
+          "tableTo": "checklist_sjabloon",
+          "columnsFrom": [
+            "sjabloon_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "checklist_uitvoering_vestiging_id_vestiging_id_fk": {
+          "name": "checklist_uitvoering_vestiging_id_vestiging_id_fk",
+          "tableFrom": "checklist_uitvoering",
+          "tableTo": "vestiging",
+          "columnsFrom": [
+            "vestiging_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "checklist_uitvoering_uitgevoerd_door_gebruiker_id_fk": {
+          "name": "checklist_uitvoering_uitgevoerd_door_gebruiker_id_fk",
+          "tableFrom": "checklist_uitvoering",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "uitgevoerd_door"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.document": {
+      "name": "document",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "document_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "titel": {
+          "name": "titel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "datum": {
+          "name": "datum",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "document_gebruiker_idx": {
+          "name": "document_gebruiker_idx",
+          "columns": [
+            {
+              "expression": "gebruiker_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "document_gebruiker_id_gebruiker_id_fk": {
+          "name": "document_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "document",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.enquete": {
+      "name": "enquete",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "titel": {
+          "name": "titel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "intro": {
+          "name": "intro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "enquete_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vragen": {
+          "name": "vragen",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "doelgroep": {
+          "name": "doelgroep",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "anoniem": {
+          "name": "anoniem",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "opent": {
+          "name": "opent",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "sluit": {
+          "name": "sluit",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gemaakt_door": {
+          "name": "gemaakt_door",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "enquete_gemaakt_door_gebruiker_id_fk": {
+          "name": "enquete_gemaakt_door_gebruiker_id_fk",
+          "tableFrom": "enquete",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gemaakt_door"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.enquete_antwoord": {
+      "name": "enquete_antwoord",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "enquete_id": {
+          "name": "enquete_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "franchisenemer_id": {
+          "name": "franchisenemer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "antwoorden": {
+          "name": "antwoorden",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tijd": {
+          "name": "tijd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "antwoord_enquete_idx": {
+          "name": "antwoord_enquete_idx",
+          "columns": [
+            {
+              "expression": "enquete_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "enquete_antwoord_enquete_id_enquete_id_fk": {
+          "name": "enquete_antwoord_enquete_id_enquete_id_fk",
+          "tableFrom": "enquete_antwoord",
+          "tableTo": "enquete",
+          "columnsFrom": [
+            "enquete_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "enquete_antwoord_gebruiker_id_gebruiker_id_fk": {
+          "name": "enquete_antwoord_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "enquete_antwoord",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.enquete_deelname": {
+      "name": "enquete_deelname",
+      "schema": "",
+      "columns": {
+        "enquete_id": {
+          "name": "enquete_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tijd": {
+          "name": "tijd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "enquete_deelname_enquete_id_enquete_id_fk": {
+          "name": "enquete_deelname_enquete_id_enquete_id_fk",
+          "tableFrom": "enquete_deelname",
+          "tableTo": "enquete",
+          "columnsFrom": [
+            "enquete_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "enquete_deelname_gebruiker_id_gebruiker_id_fk": {
+          "name": "enquete_deelname_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "enquete_deelname",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "enquete_deelname_enquete_id_gebruiker_id_pk": {
+          "name": "enquete_deelname_enquete_id_gebruiker_id_pk",
+          "columns": [
+            "enquete_id",
+            "gebruiker_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.evenement": {
+      "name": "evenement",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "titel": {
+          "name": "titel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "omschrijving": {
+          "name": "omschrijving",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start": {
+          "name": "start",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eind": {
+          "name": "eind",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locatie": {
+          "name": "locatie",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "doelgroep": {
+          "name": "doelgroep",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gemaakt_door": {
+          "name": "gemaakt_door",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "evenement_gemaakt_door_gebruiker_id_fk": {
+          "name": "evenement_gemaakt_door_gebruiker_id_fk",
+          "tableFrom": "evenement",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gemaakt_door"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.evenement_aanmelding": {
+      "name": "evenement_aanmelding",
+      "schema": "",
+      "columns": {
+        "evenement_id": {
+          "name": "evenement_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "aanmeld_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tijd": {
+          "name": "tijd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "evenement_aanmelding_evenement_id_evenement_id_fk": {
+          "name": "evenement_aanmelding_evenement_id_evenement_id_fk",
+          "tableFrom": "evenement_aanmelding",
+          "tableTo": "evenement",
+          "columnsFrom": [
+            "evenement_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "evenement_aanmelding_gebruiker_id_gebruiker_id_fk": {
+          "name": "evenement_aanmelding_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "evenement_aanmelding",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "evenement_aanmelding_evenement_id_gebruiker_id_pk": {
+          "name": "evenement_aanmelding_evenement_id_gebruiker_id_pk",
+          "columns": [
+            "evenement_id",
+            "gebruiker_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.franchisenemer": {
+      "name": "franchisenemer",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "naam": {
+          "name": "naam",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "regio_id": {
+          "name": "regio_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "franchisenemer_regio_id_regio_id_fk": {
+          "name": "franchisenemer_regio_id_regio_id_fk",
+          "tableFrom": "franchisenemer",
+          "tableTo": "regio",
+          "columnsFrom": [
+            "regio_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.functie": {
+      "name": "functie",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "naam": {
+          "name": "naam",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "familie": {
+          "name": "familie",
+          "type": "functie_familie",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "trede": {
+          "name": "trede",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "functiegroep": {
+          "name": "functiegroep",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "doel": {
+          "name": "doel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kerntaken": {
+          "name": "kerntaken",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "verantwoordelijkheden": {
+          "name": "verantwoordelijkheden",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plaats_in_organisatie": {
+          "name": "plaats_in_organisatie",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.functie_profiel": {
+      "name": "functie_profiel",
+      "schema": "",
+      "columns": {
+        "functie_id": {
+          "name": "functie_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "weging": {
+          "name": "weging",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vereist_niveau": {
+          "name": "vereist_niveau",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "voorwaarde": {
+          "name": "voorwaarde",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "functie_profiel_functie_id_functie_id_fk": {
+          "name": "functie_profiel_functie_id_functie_id_fk",
+          "tableFrom": "functie_profiel",
+          "tableTo": "functie",
+          "columnsFrom": [
+            "functie_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "functie_profiel_item_id_profiel_item_id_fk": {
+          "name": "functie_profiel_item_id_profiel_item_id_fk",
+          "tableFrom": "functie_profiel",
+          "tableTo": "profiel_item",
+          "columnsFrom": [
+            "item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "functie_profiel_functie_id_item_id_pk": {
+          "name": "functie_profiel_functie_id_item_id_pk",
+          "columns": [
+            "functie_id",
+            "item_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "weging_positief": {
+          "name": "weging_positief",
+          "value": "\"functie_profiel\".\"weging\" > 0 and \"functie_profiel\".\"weging\" <= 100"
+        },
+        "niveau_bereik": {
+          "name": "niveau_bereik",
+          "value": "\"functie_profiel\".\"vereist_niveau\" between 1 and 4"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.gebruiker": {
+      "name": "gebruiker",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "voornaam": {
+          "name": "voornaam",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "achternaam": {
+          "name": "achternaam",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rol": {
+          "name": "rol",
+          "type": "rol",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "functie_id": {
+          "name": "functie_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "franchisenemer_id": {
+          "name": "franchisenemer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discipline": {
+          "name": "discipline",
+          "type": "discipline",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mobiel": {
+          "name": "mobiel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "in_dienst_sinds": {
+          "name": "in_dienst_sinds",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "verjaardag": {
+          "name": "verjaardag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "toon_verjaardag": {
+          "name": "toon_verjaardag",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "personeelsnummer": {
+          "name": "personeelsnummer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actief": {
+          "name": "actief",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "over_mij": {
+          "name": "over_mij",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "gebruiker_fn_idx": {
+          "name": "gebruiker_fn_idx",
+          "columns": [
+            {
+              "expression": "franchisenemer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "gebruiker_functie_id_functie_id_fk": {
+          "name": "gebruiker_functie_id_functie_id_fk",
+          "tableFrom": "gebruiker",
+          "tableTo": "functie",
+          "columnsFrom": [
+            "functie_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "gebruiker_franchisenemer_id_franchisenemer_id_fk": {
+          "name": "gebruiker_franchisenemer_id_franchisenemer_id_fk",
+          "tableFrom": "gebruiker",
+          "tableTo": "franchisenemer",
+          "columnsFrom": [
+            "franchisenemer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "gebruiker_personeelsnummer_unique": {
+          "name": "gebruiker_personeelsnummer_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "personeelsnummer"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.gebruiker_vestiging": {
+      "name": "gebruiker_vestiging",
+      "schema": "",
+      "columns": {
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vestiging_id": {
+          "name": "vestiging_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "gv_vestiging_idx": {
+          "name": "gv_vestiging_idx",
+          "columns": [
+            {
+              "expression": "vestiging_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "gebruiker_vestiging_gebruiker_id_gebruiker_id_fk": {
+          "name": "gebruiker_vestiging_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "gebruiker_vestiging",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "gebruiker_vestiging_vestiging_id_vestiging_id_fk": {
+          "name": "gebruiker_vestiging_vestiging_id_vestiging_id_fk",
+          "tableFrom": "gebruiker_vestiging",
+          "tableTo": "vestiging",
+          "columnsFrom": [
+            "vestiging_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "gebruiker_vestiging_gebruiker_id_vestiging_id_pk": {
+          "name": "gebruiker_vestiging_gebruiker_id_vestiging_id_pk",
+          "columns": [
+            "gebruiker_id",
+            "vestiging_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.handboek_doc": {
+      "name": "handboek_doc",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "titel": {
+          "name": "titel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "versie": {
+          "name": "versie",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eigenaar": {
+          "name": "eigenaar",
+          "type": "discipline",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bijgewerkt": {
+          "name": "bijgewerkt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "review_voor": {
+          "name": "review_voor",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "doelgroep": {
+          "name": "doelgroep",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "inhoud": {
+          "name": "inhoud",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.leer_item": {
+      "name": "leer_item",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "titel": {
+          "name": "titel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "leer_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duur_min": {
+          "name": "duur_min",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "functie_ids": {
+          "name": "functie_ids",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "onboarding": {
+          "name": "onboarding",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "volgorde": {
+          "name": "volgorde",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inhoud": {
+          "name": "inhoud",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quiz": {
+          "name": "quiz",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "handboek_doc_id": {
+          "name": "handboek_doc_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "profiel_item_id": {
+          "name": "profiel_item_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "leer_item_handboek_doc_id_handboek_doc_id_fk": {
+          "name": "leer_item_handboek_doc_id_handboek_doc_id_fk",
+          "tableFrom": "leer_item",
+          "tableTo": "handboek_doc",
+          "columnsFrom": [
+            "handboek_doc_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "leer_item_profiel_item_id_profiel_item_id_fk": {
+          "name": "leer_item_profiel_item_id_profiel_item_id_fk",
+          "tableFrom": "leer_item",
+          "tableTo": "profiel_item",
+          "columnsFrom": [
+            "profiel_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.leer_voortgang": {
+      "name": "leer_voortgang",
+      "schema": "",
+      "columns": {
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "voortgang_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "inzending": {
+          "name": "inzending",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "feedback": {
+          "name": "feedback",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "beoordeeld_door": {
+          "name": "beoordeeld_door",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tijd": {
+          "name": "tijd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "voortgang_status_idx": {
+          "name": "voortgang_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "leer_voortgang_gebruiker_id_gebruiker_id_fk": {
+          "name": "leer_voortgang_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "leer_voortgang",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "leer_voortgang_item_id_leer_item_id_fk": {
+          "name": "leer_voortgang_item_id_leer_item_id_fk",
+          "tableFrom": "leer_voortgang",
+          "tableTo": "leer_item",
+          "columnsFrom": [
+            "item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "leer_voortgang_beoordeeld_door_gebruiker_id_fk": {
+          "name": "leer_voortgang_beoordeeld_door_gebruiker_id_fk",
+          "tableFrom": "leer_voortgang",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "beoordeeld_door"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "leer_voortgang_gebruiker_id_item_id_pk": {
+          "name": "leer_voortgang_gebruiker_id_item_id_pk",
+          "columns": [
+            "gebruiker_id",
+            "item_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.like": {
+      "name": "like",
+      "schema": "",
+      "columns": {
+        "doel_type": {
+          "name": "doel_type",
+          "type": "doel_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "doel_id": {
+          "name": "doel_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tijd": {
+          "name": "tijd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "like_doel_idx": {
+          "name": "like_doel_idx",
+          "columns": [
+            {
+              "expression": "doel_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "doel_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "like_gebruiker_id_gebruiker_id_fk": {
+          "name": "like_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "like",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "like_doel_type_doel_id_gebruiker_id_pk": {
+          "name": "like_doel_type_doel_id_gebruiker_id_pk",
+          "columns": [
+            "doel_type",
+            "doel_id",
+            "gebruiker_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.medewerker_niveau": {
+      "name": "medewerker_niveau",
+      "schema": "",
+      "columns": {
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "niveau": {
+          "name": "niveau",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bijgewerkt": {
+          "name": "bijgewerkt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "medewerker_niveau_gebruiker_id_gebruiker_id_fk": {
+          "name": "medewerker_niveau_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "medewerker_niveau",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "medewerker_niveau_item_id_profiel_item_id_fk": {
+          "name": "medewerker_niveau_item_id_profiel_item_id_fk",
+          "tableFrom": "medewerker_niveau",
+          "tableTo": "profiel_item",
+          "columnsFrom": [
+            "item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "medewerker_niveau_gebruiker_id_item_id_pk": {
+          "name": "medewerker_niveau_gebruiker_id_item_id_pk",
+          "columns": [
+            "gebruiker_id",
+            "item_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ontgrendeling": {
+      "name": "ontgrendeling",
+      "schema": "",
+      "columns": {
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tot": {
+          "name": "tot",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ontgrendeling_gebruiker_id_gebruiker_id_fk": {
+          "name": "ontgrendeling_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "ontgrendeling",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.profiel_item": {
+      "name": "profiel_item",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "categorie": {
+          "name": "categorie",
+          "type": "profiel_categorie",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "naam": {
+          "name": "naam",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "omschrijving": {
+          "name": "omschrijving",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "niveaus": {
+          "name": "niveaus",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.reactie": {
+      "name": "reactie",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "bericht_id": {
+          "name": "bericht_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tekst": {
+          "name": "tekst",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tijd": {
+          "name": "tijd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "reactie_bericht_idx": {
+          "name": "reactie_bericht_idx",
+          "columns": [
+            {
+              "expression": "bericht_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "reactie_bericht_id_bericht_id_fk": {
+          "name": "reactie_bericht_id_bericht_id_fk",
+          "tableFrom": "reactie",
+          "tableTo": "bericht",
+          "columnsFrom": [
+            "bericht_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reactie_gebruiker_id_gebruiker_id_fk": {
+          "name": "reactie_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "reactie",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.regio": {
+      "name": "regio",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "naam": {
+          "name": "naam",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ruilverzoek": {
+      "name": "ruilverzoek",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "dienst_id": {
+          "name": "dienst_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "aangeboden_door": {
+          "name": "aangeboden_door",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "overgenomen_door": {
+          "name": "overgenomen_door",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "ruil_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'open'"
+        },
+        "aangemaakt": {
+          "name": "aangemaakt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "ruil_dienst_idx": {
+          "name": "ruil_dienst_idx",
+          "columns": [
+            {
+              "expression": "dienst_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ruilverzoek_aangeboden_door_gebruiker_id_fk": {
+          "name": "ruilverzoek_aangeboden_door_gebruiker_id_fk",
+          "tableFrom": "ruilverzoek",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "aangeboden_door"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ruilverzoek_overgenomen_door_gebruiker_id_fk": {
+          "name": "ruilverzoek_overgenomen_door_gebruiker_id_fk",
+          "tableFrom": "ruilverzoek",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "overgenomen_door"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.salaris": {
+      "name": "salaris",
+      "schema": "",
+      "columns": {
+        "gebruiker_id": {
+          "name": "gebruiker_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "uurloon": {
+          "name": "uurloon",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schaal_min": {
+          "name": "schaal_min",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schaal_max": {
+          "name": "schaal_max",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "salaris_gebruiker_id_gebruiker_id_fk": {
+          "name": "salaris_gebruiker_id_gebruiker_id_fk",
+          "tableFrom": "salaris",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "gebruiker_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.vestiging": {
+      "name": "vestiging",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "naam": {
+          "name": "naam",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plaats": {
+          "name": "plaats",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "franchisenemer_id": {
+          "name": "franchisenemer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "vestiging_fn_idx": {
+          "name": "vestiging_fn_idx",
+          "columns": [
+            {
+              "expression": "franchisenemer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "vestiging_franchisenemer_id_franchisenemer_id_fk": {
+          "name": "vestiging_franchisenemer_id_franchisenemer_id_fk",
+          "tableFrom": "vestiging",
+          "tableTo": "franchisenemer",
+          "columnsFrom": [
+            "franchisenemer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.waarde": {
+      "name": "waarde",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "naam": {
+          "name": "naam",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "omschrijving": {
+          "name": "omschrijving",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "emoji": {
+          "name": "emoji",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "volgorde": {
+          "name": "volgorde",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.waardering": {
+      "name": "waardering",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "van_id": {
+          "name": "van_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "aan_id": {
+          "name": "aan_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "waarde_id": {
+          "name": "waarde_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tekst": {
+          "name": "tekst",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "punten": {
+          "name": "punten",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 10
+        },
+        "tijd": {
+          "name": "tijd",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "waardering_aan_idx": {
+          "name": "waardering_aan_idx",
+          "columns": [
+            {
+              "expression": "aan_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "waardering_tijd_idx": {
+          "name": "waardering_tijd_idx",
+          "columns": [
+            {
+              "expression": "tijd",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "waardering_van_id_gebruiker_id_fk": {
+          "name": "waardering_van_id_gebruiker_id_fk",
+          "tableFrom": "waardering",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "van_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "waardering_aan_id_gebruiker_id_fk": {
+          "name": "waardering_aan_id_gebruiker_id_fk",
+          "tableFrom": "waardering",
+          "tableTo": "gebruiker",
+          "columnsFrom": [
+            "aan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "waardering_waarde_id_waarde_id_fk": {
+          "name": "waardering_waarde_id_waarde_id_fk",
+          "tableFrom": "waardering",
+          "tableTo": "waarde",
+          "columnsFrom": [
+            "waarde_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "niet_zelf": {
+          "name": "niet_zelf",
+          "value": "\"waardering\".\"van_id\" <> \"waardering\".\"aan_id\""
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.aanmeld_status": {
+      "name": "aanmeld_status",
+      "schema": "public",
+      "values": [
+        "ja",
+        "misschien",
+        "nee"
+      ]
+    },
+    "public.actiepunt_status": {
+      "name": "actiepunt_status",
+      "schema": "public",
+      "values": [
+        "open",
+        "klaar"
+      ]
+    },
+    "public.beloning_status": {
+      "name": "beloning_status",
+      "schema": "public",
+      "values": [
+        "aangevraagd",
+        "uitgereikt",
+        "afgewezen"
+      ]
+    },
+    "public.beoordeling_status": {
+      "name": "beoordeling_status",
+      "schema": "public",
+      "values": [
+        "zelfbeoordeling",
+        "beoordelen",
+        "gesprek",
+        "besloten"
+      ]
+    },
+    "public.profiel_categorie": {
+      "name": "profiel_categorie",
+      "schema": "public",
+      "values": [
+        "competentie",
+        "vaardigheid",
+        "kennis"
+      ]
+    },
+    "public.chat_type": {
+      "name": "chat_type",
+      "schema": "public",
+      "values": [
+        "vestiging",
+        "franchisenemer",
+        "shiftleiders",
+        "hq-kanaal"
+      ]
+    },
+    "public.checklist_soort": {
+      "name": "checklist_soort",
+      "schema": "public",
+      "values": [
+        "dagtaak",
+        "evaluatie"
+      ]
+    },
+    "public.discipline": {
+      "name": "discipline",
+      "schema": "public",
+      "values": [
+        "operations",
+        "marketing",
+        "hr",
+        "inkoop",
+        "kwaliteit"
+      ]
+    },
+    "public.document_type": {
+      "name": "document_type",
+      "schema": "public",
+      "values": [
+        "loonstrook",
+        "contract"
+      ]
+    },
+    "public.doel_type": {
+      "name": "doel_type",
+      "schema": "public",
+      "values": [
+        "bericht",
+        "waardering"
+      ]
+    },
+    "public.enquete_type": {
+      "name": "enquete_type",
+      "schema": "public",
+      "values": [
+        "poll",
+        "pulse",
+        "enps",
+        "survey",
+        "idee"
+      ]
+    },
+    "public.functie_familie": {
+      "name": "functie_familie",
+      "schema": "public",
+      "values": [
+        "vestiging",
+        "franchise",
+        "hq"
+      ]
+    },
+    "public.leer_type": {
+      "name": "leer_type",
+      "schema": "public",
+      "values": [
+        "video",
+        "quiz",
+        "module",
+        "challenge"
+      ]
+    },
+    "public.rol": {
+      "name": "rol",
+      "schema": "public",
+      "values": [
+        "medewerker",
+        "shiftleider",
+        "manager",
+        "franchisenemer",
+        "hq"
+      ]
+    },
+    "public.ruil_status": {
+      "name": "ruil_status",
+      "schema": "public",
+      "values": [
+        "open",
+        "wacht-op-akkoord",
+        "goedgekeurd",
+        "afgewezen"
+      ]
+    },
+    "public.score_bron": {
+      "name": "score_bron",
+      "schema": "public",
+      "values": [
+        "zelf",
+        "beoordelaar"
+      ]
+    },
+    "public.uitvoering_status": {
+      "name": "uitvoering_status",
+      "schema": "public",
+      "values": [
+        "concept",
+        "afgerond"
+      ]
+    },
+    "public.urgentie": {
+      "name": "urgentie",
+      "schema": "public",
+      "values": [
+        "info",
+        "belangrijk",
+        "verplicht"
+      ]
+    },
+    "public.voortgang_status": {
+      "name": "voortgang_status",
+      "schema": "public",
+      "values": [
+        "gestart",
+        "ingediend",
+        "afgerond",
+        "afgekeurd"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

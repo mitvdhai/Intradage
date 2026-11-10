@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardCheck, LayoutDashboard, Megaphone, Network, Scale, ScrollText } from "lucide-react";
+import { ClipboardCheck, ClipboardList, Heart, LayoutDashboard, Megaphone, Network, Scale, ScrollText } from "lucide-react";
 
 export function BeheerNav({ hq }: { hq: boolean }) {
   const pad = usePathname();
   const items = [
     { href: "/beheer", label: "Overzicht", icoon: LayoutDashboard },
     { href: "/beheer/berichten", label: "Berichten", icoon: Megaphone },
+    { href: "/beheer/betrokkenheid", label: "Betrokkenheid", icoon: Heart },
+    { href: "/beheer/evaluaties", label: "Evaluaties", icoon: ClipboardList },
     { href: "/beheer/beoordelingen", label: "Beoordelingen", icoon: ClipboardCheck },
     { href: "/beheer/functiehuis", label: "Functiehuis", icoon: Network },
     ...(hq ? [{ href: "/beheer/regeling", label: "Beloningsregeling", icoon: Scale }, { href: "/beheer/logboek", label: "Logboek", icoon: ScrollText }] : []),

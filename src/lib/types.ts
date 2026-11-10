@@ -22,6 +22,7 @@ export interface Gebruiker {
   verjaardag?: string; // MM-DD, alleen tonen bij opt-in
   toonVerjaardag?: boolean;
   personeelsnummer: string; // sleutel richting HorecaManager
+  overMij?: string;
 }
 
 /** Lege lijst = geen beperking op die dimensie. */
@@ -39,7 +40,10 @@ export interface Bericht {
   id: string;
   titel: string;
   inhoud: string; // eenvoudige tekst; regels die met "- " beginnen worden een lijst
-  afzender: { type: "hq"; discipline: Discipline } | { type: "fn"; franchisenemerId: string; naam: string };
+  afzender:
+    | { type: "hq"; discipline: Discipline }
+    | { type: "fn"; franchisenemerId: string; naam: string }
+    | { type: "medewerker"; gebruikerId: string; naam: string };
   doelgroep: Doelgroep;
   urgentie: Urgentie;
   vastgezet: boolean;

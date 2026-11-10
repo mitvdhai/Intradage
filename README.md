@@ -1,13 +1,15 @@
 # Intradage
 
-Het interne platform van Bram Ladage: één app voor nieuws, chat, leren, het handboek met AI-assistent, rooster en documenten, en een functiehuis met gewogen beoordelingen. Daarnaast een beheeromgeving voor HQ en franchisenemers.
+Het interne platform van Bram Ladage: één app voor communicatie, waardering en werkbeleving. Nieuws en een tijdlijn met posts, chat, waardering op kernwaarden met punten en beloningen, peilingen (pulse, eNPS, polls), evenementen, smoelenboek, leren, het handboek met AI-assistent, dagchecklists en vestigingsevaluaties, rooster en documenten, en een functiehuis met gewogen beoordelingen. Daarnaast een beheeromgeving voor HQ en franchisenemers.
 
 ![Schermen](docs/schermen.png)
 
 > **Status: werkend prototype op PostgreSQL.** Alle schermen en flows werken en worden opgeslagen in de database. HorecaManager (Staff) is nog gesimuleerd achter een adapter.
 >
-> - Gebruik en live zetten: [docs/handleiding.md](docs/handleiding.md) (met screenshots)
+> - Handleiding voor gebruikers: [docs/handleiding-gebruikers.pdf](docs/handleiding-gebruikers.pdf) · [docs/handleiding.md](docs/handleiding.md)
+> - Live zetten op Railway: [docs/deploy.md](docs/deploy.md)
 > - Keuzes en het pad naar productie: [docs/architectuur.md](docs/architectuur.md)
+> - Voorstel met marktverkenning (6 platforms): [docs/voorstel/voorstel-v4.pdf](docs/voorstel/voorstel-v4.pdf)
 
 ## Starten
 
@@ -20,11 +22,11 @@ Op het startscherm kies je een persoon:
 
 | Persoon | Rol | Laat zien |
 |---|---|---|
-| Sanne | Medewerker | Startscherm, verplicht bericht bevestigen, leren, handboek-assistent, rooster, functie en profiel, documenten met sms-code (demo: `123456`) |
-| Yara | Shiftleider | Zelfde app, ander functieprofiel |
+| Sanne | Medewerker | Startscherm en tijdlijn (posten, sausje geven), verplicht bericht bevestigen, waarderen, beloningen, pulse, evenementen, smoelenboek, leren, handboek-assistent, rooster, functie, documenten met sms-code (demo: `123456`) |
+| Yara | Shiftleider | Dagchecklists openen, sluiten en HACCP invullen |
 | Erik | Franchisenemer | Team, challenges beoordelen, ruil goedkeuren, beoordeling invullen met live salarisadvies, besluit vastleggen |
-| Lisa | HQ Kwaliteit | Beheer: overzicht per franchisenemer, berichten met doelgroep en bereik |
-| Joost | HQ HR | Beheer: functiehuis (wegingen), beloningsregeling, beoordelingen, logboek |
+| Lisa | HQ Kwaliteit | Vestigingsevaluatie uitvoeren met knock-outs en actiepunten; beheer: overzicht, berichten, evaluaties |
+| Joost | HQ HR | Beheer: betrokkenheid (eNPS, peiling starten, beloningen uitreiken), functiehuis, beloningsregeling, beoordelingen, logboek |
 
 ### Database
 
@@ -86,7 +88,8 @@ src/
     handboek/                zoeken in passages + assistent met bronvermelding
 drizzle/                     SQL-migraties
 docs/
-  handleiding.md             gebruik per rol + live zetten op Railway (met screenshots)
+  handleiding.md / .pdf      handleiding voor gebruikers, per rol, met screenshots
+  deploy.md                  live zetten op Railway
   architectuur.md            keuzes, productiepad, open punten
   functiehuis.md             rekenregels en spelregels van het functiehuis
   voorstel/                  het voorstel (PDF)

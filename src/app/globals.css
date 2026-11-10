@@ -44,3 +44,13 @@ body {
 .tap {
   min-height: 44px;
 }
+
+/* Sausje: het ketchup-hartje plopt op het scherm */
+@keyframes sausje-plop {
+  0% { transform: translateY(-6px) scale(.4, .6); opacity: 0; }
+  45% { transform: translateY(0) scale(1.25, .8); opacity: 1; }
+  70% { transform: scale(.92, 1.1); }
+  100% { transform: scale(1); }
+}
+.sausje-plop { display: inline-block; transform-origin: 50% 90%; animation: sausje-plop .42s cubic-bezier(.3,1.4,.5,1); }
+@media (prefers-reduced-motion: reduce) { .sausje-plop { animation: none; } }

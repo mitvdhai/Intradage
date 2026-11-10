@@ -39,10 +39,16 @@ describe("database", () => {
     expect(s.uurloon).toBe(15.2);
   });
 
+  it("weigert een waardering aan jezelf", async () => {
+    await expect(db.insert(t.waardering).values({ id: "zelf", vanId: "u-sanne", aanId: "u-sanne", waardeId: "w-samen", tekst: "ik" })).rejects.toThrow();
+  });
+
   it("kan opnieuw seeden na leegmaken", async () => {
     await leegmaken(db);
     await seed(db);
-    const [{ n }] = (await db.execute<{ n: number }>(sql`select count(*)::int as n from bericht`)).rows;
+    const [{ n }] = (await db.execute<{ n: number }>(sql`select count(*)::int as n from bericht where afzender_type <> 'medewerker'`)).rows;
     expect(n).toBe(5);
+    const [{ w }] = (await db.execute<{ w: number }>(sql`select count(*)::int as w from waardering`)).rows;
+    expect(w).toBeGreaterThan(0);
   });
 });
