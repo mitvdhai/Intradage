@@ -314,22 +314,52 @@ export async function klokUit(_: unknown, fd: FormData): Promise<Res> {
   return { ok: true };
 }
 
-export async function keurUrenGoed(ids: string[]) {
-  const { u, org } = await leiding();
+/** Medewerker vult de uren van een afgelopen dienst in (standaard de geplande tijden) en dient ze in ter bevestiging. */
+export async function dienUrenIn(dienstId: string, _: unknown, fd: FormData): Promise<Res> {
+  const { u } = await vereisGebruiker();
+  const d = await leesDienst(dienstId);
+  if (!d || d.gebruikerId !== u.id || d.start > new Date()) return { fout: "Deze dienst kun je (nog) niet invullen." };
   const db = await getDb();
-  const scope = scopeVestigingen(org, u);
+  const bestaand = await db.select().from(t.klok).where(and(eq(t.klok.gebruikerId, u.id), eq(t.klok.dienstId, dienstId)));
+  if (bestaand.length) return { fout: "Voor deze dienst zijn al uren ingevuld." };
+  const datum = d.start.toLocaleDateString("sv-SE");
+  const van = tekst(fd, "in"), tot = tekst(fd, "uit");
+  if (!isTijd(van) || !isTijd(tot) || naarMin(tot) <= naarMin(van)) return { fout: "Vul een begin- en eindtijd in; het einde moet na het begin liggen." };
+  const pauze = Math.max(0, Math.min(120, getal(fd, "pauze") || 0));
+  const opmerking = tekst(fd, "opmerking");
+  const afwijkend = van !== d.start.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" }) || tot !== d.eind.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+  if (afwijkend && !opmerking) return { fout: "Je tijden wijken af van het rooster. Schrijf er kort bij waarom." };
+  await db.insert(t.klok).values({ id: id("kl"), gebruikerId: u.id, vestigingId: d.vestigingId, dienstId, in: opTijd(datum, van), uit: opTijd(datum, tot), pauzeMin: pauze, status: "ingediend", opmerking: opmerking || null });
+  await audit(u.id, "Uren ingediend", `${dienstId}: ${van}–${tot}${afwijkend ? " (afwijkend)" : ""}`);
+  ververs();
+  return { ok: true };
+}
+
+/** Wie mag uren van deze vestiging bevestigen? Shiftleider (eigen vestiging), manager, franchisenemer, HQ. Nooit je eigen uren. */
+async function magBevestigen(vestigingId: string, gebruikerId: string) {
+  const s = await vereisGebruiker();
+  if (s.u.id === gebruikerId) return null;
+  if (isHQ(s.u) || (isLeiding(s.u) && scopeVestigingen(s.org, s.u).includes(vestigingId)) || (s.u.rol === "shiftleider" && s.u.vestigingIds.includes(vestigingId))) return s;
+  return null;
+}
+
+export async function keurUrenGoed(ids: string[]) {
+  const { u } = await vereisGebruiker();
+  const db = await getDb();
   const rijen = ids.length ? await db.select().from(t.klok).where(and(inArray(t.klok.id, ids), eq(t.klok.status, "ingediend"))) : [];
-  const ok = rijen.filter((k) => scope.includes(k.vestigingId)).map((k) => k.id);
+  const ok: string[] = [];
+  for (const k of rijen) if (await magBevestigen(k.vestigingId, k.gebruikerId)) ok.push(k.id);
   if (ok.length) await db.update(t.klok).set({ status: "goedgekeurd", goedgekeurdDoor: u.id }).where(inArray(t.klok.id, ok));
   await audit(u.id, "Uren goedgekeurd", `${ok.length} regels`);
   ververs();
 }
 
 export async function corrigeerKlok(klokId: string, _: unknown, fd: FormData): Promise<Res> {
-  const { u, org } = await leiding();
   const db = await getDb();
   const [k] = await db.select().from(t.klok).where(eq(t.klok.id, klokId));
-  if (!k || !scopeVestigingen(org, u).includes(k.vestigingId)) return { fout: "Geen rechten." };
+  const s = k && await magBevestigen(k.vestigingId, k.gebruikerId);
+  if (!k || !s) return { fout: "Geen rechten." };
+  const { u } = s;
   const datum = k.in.toLocaleDateString("sv-SE");
   const van = tekst(fd, "in"), tot = tekst(fd, "uit");
   if (!isTijd(van) || !isTijd(tot) || naarMin(tot) <= naarMin(van)) return { fout: "Ongeldige tijden." };

@@ -281,6 +281,26 @@ p = await als("u-sanne");
 const r2 = await p.goto(`${BASE}/beheer/personeel/u-daan`, { waitUntil: "networkidle0" });
 ok(r2.url().endsWith("/app") || r2.status() === 404, "medewerker heeft geen toegang tot personeelsdossiers");
 
+// 23. Uren invullen na een dienst (standaard de geplande tijd) en laten bevestigen door de shiftleider
+p = await als("u-sanne");
+await p.goto(`${BASE}/app/werk/uren`, { waitUntil: "networkidle0" });
+const teVullen = (await tekst(p)).match(/in te vullen\s*\n\s*(\d+)/i)?.[1];
+ok(Number(teVullen) > 0, "medewerker heeft een taak om uren in te vullen");
+await klikTekst(p, "Indienen");
+await p.waitForFunction((n) => (document.body.innerText.match(/in te vullen\s*\n\s*(\d+)/i)?.[1] ?? "0") !== n, { timeout: 8000 }, teVullen);
+ok(true, "uren ingediend met de geplande tijden");
+p = await als("u-yara");
+await p.goto(`${BASE}/app/werk/uren/bevestigen`, { waitUntil: "networkidle0" });
+ok((await tekst(p)).includes("Sanne"), "shiftleider ziet de ingediende uren van Sanne");
+await p.evaluate(() => [...document.querySelectorAll("div.rounded-2xl")].find((d) => d.innerText.startsWith("Sanne"))?.querySelector("button")?.click());
+await p.waitForFunction(() => !document.body.innerText.includes("Sanne") || document.body.innerText.includes("Alle uren zijn bevestigd"), { timeout: 8000 }).catch(() => {});
+p = await als("u-erik");
+await p.setViewport({ width: 1400, height: 900 });
+const vorigeMa = (() => { const d = new Date(`${maandag}T12:00:00`); d.setDate(d.getDate() - 14); return d.toLocaleDateString("sv-SE"); })();
+await p.goto(`${BASE}/beheer/uren/uitdraai?van=${vorigeMa}&tot=${volgende}&detail=1`, { waitUntil: "networkidle0" });
+const uit = await tekst(p);
+ok(/urenoverzicht voor de loonadministratie/i.test(uit) && uit.includes("Sanne de Wit"), "uitdraai per periode met bevestigde uren");
+
 await browser.close();
 console.log(fouten.length ? `\nFOUTEN:\n${fouten.join("\n")}` : "\nAlle flows OK");
 process.exit(fouten.length ? 1 : 0);

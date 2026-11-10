@@ -289,3 +289,29 @@ export async function passendVoor(gebruikerId: string, lijst: DienstRij[]) {
       && controleerDienst({ start: d.start, eind: d.eind }, leeftijdOp(m.geboortedatum, datum), eigen).length === 0;
   });
 }
+
+/** Afgelopen, gepubliceerde diensten (laatste 21 dagen) waarvoor nog geen uren zijn ingevuld of geklokt. */
+export async function urenInTeVullen(gebruikerId: string) {
+  const db = await getDb();
+  const nu = new Date();
+  const lijst = await diensten({ gebruikerIds: [gebruikerId], van: new Date(nu.getTime() - 21 * 86400000), tot: nu, status: "gepubliceerd" });
+  const af = lijst.filter((d) => d.eind <= nu);
+  if (!af.length) return [];
+  const klok = await db.select({ dienstId: t.klok.dienstId }).from(t.klok).where(and(eq(t.klok.gebruikerId, gebruikerId), inArray(t.klok.dienstId, af.map((d) => d.id))));
+  const gedaan = new Set(klok.map((k) => k.dienstId));
+  return af.filter((d) => !gedaan.has(d.id));
+}
+
+/** Vestigingen waarvan deze gebruiker uren mag bevestigen. */
+export function bevestigVestigingen(org: Org, u: Gebruiker) {
+  if (isHQ(u) || isLeiding(u)) return scopeVestigingen(org, u);
+  if (u.rol === "shiftleider") return u.vestigingIds;
+  return [];
+}
+
+/** Ingediende urenregels die deze gebruiker mag bevestigen (nooit de eigen). */
+export async function teBevestigen(org: Org, u: Gebruiker) {
+  const vest = bevestigVestigingen(org, u);
+  if (!vest.length) return [];
+  return (await klokVan({ vestigingIds: vest, status: "ingediend" })).filter((k) => k.gebruikerId !== u.id);
+}

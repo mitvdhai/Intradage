@@ -11,8 +11,8 @@ export default async function BeheerLayout({ children }: LayoutProps<"/beheer">)
   // Franchisenemer en HQ: alles. Vestigingsmanager: alleen het personeelsdeel (plannen, uren, verlof, werving).
   if (!magBeheer(u) && !isLeiding(u)) redirect("/app");
   return (
-    <div className="flex min-h-screen bg-canvas">
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col bg-navy-800 text-navy-100 md:flex">
+    <div className="flex min-h-screen bg-canvas print:bg-white">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col bg-navy-800 text-navy-100 md:flex print:hidden">
         <div className="flex items-center gap-2 px-5 py-5">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 font-bold text-white">I</span>
           <span className="font-bold text-white">Intradage <span className="font-normal text-navy-200">beheer</span></span>
@@ -27,7 +27,7 @@ export default async function BeheerLayout({ children }: LayoutProps<"/beheer">)
           </div>
         </div>
       </aside>
-      <main className="min-w-0 flex-1 px-6 py-6 lg:px-10">{children}</main>
+      <main className="min-w-0 flex-1 px-6 py-6 lg:px-10 print:p-0">{children}</main>
     </div>
   );
 }

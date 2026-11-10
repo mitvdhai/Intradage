@@ -262,7 +262,7 @@ export async function auditLog(limiet = 200): Promise<AuditRegel[]> {
 
 // ---------- Te doen ----------
 
-export interface TeDoe { id: string; titel: string; sub: string; href: string; urgent?: boolean; pct?: number; soort: "bericht" | "leren" | "beoordelen" | "ruil" | "zelfbeoordeling" | "enquete" | "actiepunt" | "beloning" | "contract" | "personeel" | "verlof" }
+export interface TeDoe { id: string; titel: string; sub: string; href: string; urgent?: boolean; pct?: number; soort: "bericht" | "leren" | "beoordelen" | "ruil" | "zelfbeoordeling" | "enquete" | "actiepunt" | "beloning" | "contract" | "personeel" | "verlof" | "uren" }
 
 /** Wat moet deze gebruiker nu doen? Basis voor "Te doen", de badge en het meldingencentrum. */
 export async function teDoen(org: Org, u: Gebruiker): Promise<TeDoe[]> {
@@ -301,6 +301,10 @@ export async function teDoen(org: Org, u: Gebruiker): Promise<TeDoe[]> {
   ]);
   for (const c of mijnContracten.filter((c) => !c.ondertekendWerknemer)) lijst.push({ id: `ct-${c.id}`, titel: c.volgnummer > 1 ? "Je nieuwe contract tekenen" : "Je contract tekenen", sub: `Ingangsdatum ${new Date(`${c.start}T12:00:00`).toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}`, href: `/app/werk/contract/${c.id}`, urgent: true, soort: "contract" });
   for (const tk of mijnTaken.filter((x) => !x.klaar && x.sleutel !== "leerpad" && x.sleutel !== "contract-werknemer")) lijst.push({ id: `lc-${tk.id}`, titel: tk.titel, sub: tk.fase === "onboarding" ? "Onboarding" : tk.fase === "offboarding" ? "Laatste werkweken" : "Voor je start", href: tk.sleutel === "voorstellen" ? "/app" : tk.sleutel === "exit" ? "/app/enquetes" : "/app/werk/beschikbaarheid", soort: "personeel" });
+  const { urenInTeVullen, teBevestigen } = await import("./personeel/data");
+  const [inTeVullen, bevestigen] = await Promise.all([urenInTeVullen(u.id), teBevestigen(org, u)]);
+  if (inTeVullen.length) lijst.push({ id: "uren-invullen", titel: `Uren invullen (${inTeVullen.length} dienst${inTeVullen.length > 1 ? "en" : ""})`, sub: "Klopt de geplande tijd? Dan is het één tik", href: "/app/werk/uren", urgent: inTeVullen.some((d) => d.eind.getTime() < Date.now() - 2 * 86400000), soort: "uren" });
+  if (bevestigen.length) lijst.push({ id: "uren-bevestigen", titel: `${bevestigen.length} urenregel${bevestigen.length > 1 ? "s" : ""} bevestigen`, sub: "Uren van je team, voor de loonadministratie", href: "/app/werk/uren/bevestigen", soort: "uren" });
   if (!mijnBesch.length && (u.rol === "medewerker" || u.rol === "shiftleider")) lijst.push({ id: "beschikbaarheid", titel: "Geef je beschikbaarheid door", sub: "Dan kun je worden ingeroosterd", href: "/app/werk/beschikbaarheid", soort: "personeel" });
 
   if (isLeiding(u)) {

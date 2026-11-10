@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, FileText } from "lucide-react";
 import { ActieForm } from "@/components/actie-form";
 import { cx } from "@/components/ui";
 import { scopeVestigingen } from "@/lib/access";
@@ -35,13 +35,14 @@ export default async function Uren({ searchParams }: PageProps<"/beheer/uren">) 
         rechts={<div className="flex items-center gap-2">
           <Link href={link(deadlineVan(maandag, -7))} className="rounded-lg p-2 ring-1 ring-line"><ChevronLeft size={16} /></Link>
           <Link href={link(deadlineVan(maandag, 7))} className="rounded-lg p-2 ring-1 ring-line"><ChevronRight size={16} /></Link>
+          <Link href={`/beheer/uren/uitdraai?van=${maandag}&tot=${deadlineVan(maandag, 6)}`} className="inline-flex items-center gap-2 rounded-lg bg-navy-700 px-3 py-2 text-sm font-semibold text-white"><FileText size={15} /> Uitdraai week / maand / periode</Link>
           <a href={`/beheer/uren/export?van=${maandag}&tot=${deadlineVan(maandag, 6)}`} className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold ring-1 ring-line"><Download size={15} /> Uren (CSV)</a>
           <a href={`/beheer/uren/export?soort=mutaties&van=${deadlineVan(maandag, -28)}&tot=${deadlineVan(maandag, 6)}`} className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold ring-1 ring-line"><Download size={15} /> Mutaties (CSV)</a>
         </div>} />
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi waarde={n1(totaal)} label="gewerkte uren (netto)" />
         <Kpi waarde={n1(geplandUren)} label="geplande uren" />
-        <Kpi waarde={String(teKeuren.length)} label="regels te keuren" toon={teKeuren.length ? "rood" : "navy"} />
+        <Kpi waarde={String(teKeuren.length)} label="regels te bevestigen" toon={teKeuren.length ? "rood" : "navy"} />
         <Kpi waarde={String(klok.filter((k) => k.dienstId && Math.abs(afwijking(k, gepland)) > 15).length)} label="afwijkingen > 15 min t.o.v. rooster" />
       </div>
       <Blok titel="Per medewerker" rechts={teKeuren.length ? <form action={keurUrenGoed.bind(null, teKeuren.map((k) => k.id))}><button className="rounded-lg bg-navy-700 px-3.5 py-1.5 text-sm font-semibold text-white">Alles goedkeuren ({teKeuren.length})</button></form> : <span className="text-sm text-emerald-700">Alles goedgekeurd</span>}>

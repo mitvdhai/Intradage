@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
-import { CalendarDays, CalendarPlus, Clock, Hand, Palmtree, Repeat, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, CalendarPlus, CheckCheck, Clock, Hand, Palmtree, Repeat, SlidersHorizontal } from "lucide-react";
 import { OpenDienstKnop } from "@/components/werk-acties";
 import { WerkSegmenten } from "@/components/werk-segmenten";
 import { Label, Lijst, PageTop, Rij, Sectie, dagLabel, uurLabel } from "@/components/ui";
 import { biedDienstAan } from "@/lib/acties";
 import { ruilverzoeken, vestigingNaam, voornaamVan } from "@/lib/data";
-import { diensten, passendVoor, posities } from "@/lib/personeel/data";
+import { bevestigVestigingen, diensten, passendVoor, posities, urenInTeVullen } from "@/lib/personeel/data";
 import { vereisGebruiker } from "@/lib/session";
 import { staff } from "@/lib/staff/adapter";
 import { dagenVanaf } from "@/lib/tijd";
@@ -21,6 +21,8 @@ export default async function Rooster({ searchParams }: PageProps<"/app/werk">) 
     staff.rooster(u, nu, dagenVanaf(21)), ruilverzoeken(),
     diensten({ vestigingIds: u.vestigingIds, van: nu, tot: dagenVanaf(21), status: "gepubliceerd", open: true }), posities(),
   ]);
+  const inTeVullen = await urenInTeVullen(u.id);
+  const magBevestigen = bevestigVestigingen(org, u).length > 0;
   // Alleen open diensten die bij je passen: positie, beschikbaarheid, verlof en Arbeidstijdenwet
   const open = (await passendVoor(u.id, alleOpen.filter((d) => d.start > nu))).filter((d) => !mijn.some((m) => new Date(m.start).toDateString() === d.start.toDateString()));
   const ruilVan = (d: Dienst) => ruilen.find((r) => r.dienstId === d.id && r.status !== "afgewezen");
@@ -77,7 +79,8 @@ export default async function Rooster({ searchParams }: PageProps<"/app/werk">) 
             : <Rij href="/app/werk?aanbieden=1" icoon={<Repeat size={18} />} titel="Dienst aanbieden" sub="Collega's met jouw functie zien hem in de teamchat" />}
           <Rij href="/app/werk/beschikbaarheid" icoon={<SlidersHorizontal size={18} />} titel="Beschikbaarheid" sub="Wanneer kun je werken?" />
           <Rij href="/app/werk/verlof" icoon={<Palmtree size={18} />} titel="Verlof en ziekmelden" sub="Aanvragen, saldo en ziek of beter melden" />
-          <Rij href="/app/werk/uren" icoon={<Clock size={18} />} titel="Mijn uren" sub="Klokken en gewerkte uren" />
+          <Rij href="/app/werk/uren" toon={inTeVullen.length ? "rood" : "navy"} icoon={<Clock size={18} />} titel="Mijn uren" sub={inTeVullen.length ? `${inTeVullen.length} dienst${inTeVullen.length > 1 ? "en" : ""} nog invullen` : "Ingevulde en bevestigde uren"} />
+          {magBevestigen && <Rij href="/app/werk/uren/bevestigen" icoon={<CheckCheck size={18} />} titel="Uren bevestigen" sub="Uren van je team, voor de loonadministratie" />}
           <Rij href="/app/werk/agenda" icoon={<CalendarPlus size={18} />} titel="Rooster in je agenda" sub="Zet je diensten in je eigen telefoonagenda" />
         </Lijst>
       </Sectie>

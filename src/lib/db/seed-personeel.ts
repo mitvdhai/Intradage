@@ -185,7 +185,8 @@ export async function seedPersoneel(db: DB) {
 
   // Klokregels voor afgelopen diensten: vorige week goedgekeurd, deze week ingediend
   const mins = (k: number) => k * 60000;
-  const klok = diensten.filter((d) => d.gebruikerId && (d.eind as Date).getTime() < Date.now()).map((d, i) => {
+  const nogInvullen = (d: (typeof diensten)[number]) => (d.start as Date).getTime() >= Date.now() - 10 * 86400000 && ["u-sanne", "u-daan"].includes(d.gebruikerId ?? "");
+  const klok = diensten.filter((d) => d.gebruikerId && (d.eind as Date).getTime() < Date.now() && !nogInvullen(d)).map((d, i) => {
     const s = d.start as Date, e = d.eind as Date;
     const vorigeWeek = s < new Date(`${ma}T00:00:00`);
     return { id: `kl-${i}`, gebruikerId: d.gebruikerId!, vestigingId: d.vestigingId, dienstId: d.id, in: new Date(s.getTime() - mins((i % 4) * 2)), uit: new Date(e.getTime() + mins(i % 3 === 0 ? 14 : 3)), pauzeMin: d.pauzeMin ?? 0, status: vorigeWeek ? "goedgekeurd" as const : "ingediend" as const, goedgekeurdDoor: vorigeWeek ? "u-noor" : null };
