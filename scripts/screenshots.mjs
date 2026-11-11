@@ -6,7 +6,7 @@ import { mkdirSync } from "node:fs";
 const BASE = process.env.BASE_URL ?? "http://localhost:3100";
 const UIT = "docs/img";
 mkdirSync(UIT, { recursive: true });
-const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH ?? "/usr/bin/google-chrome", args: ["--no-sandbox"] });
+const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH ?? "/usr/bin/google-chrome", args: ["--no-sandbox", "--lang=nl-NL"], env: { ...process.env, LANG: "nl_NL.UTF-8" } });
 
 async function pagina(persona, desktop = false) {
   const ctx = await browser.createBrowserContext();
@@ -151,5 +151,26 @@ await foto(p, "/werken-bij/medewerker-centrum-rotterdam", "58-werken-bij");
 await foto(p, "/start/welkom-lotte", "59-preboarding");
 p = await pagina("u-noor");
 await foto(p, "/app/team", "60-app-team");
+
+// Uren, rechten en instellingen
+const eerste = (sel) => async (pg) => { const h = await pg.$eval(sel, (a) => a.href); await pg.goto(h, { waitUntil: "networkidle0" }); };
+p = await pagina("u-sanne");
+await foto(p, "/app/werk/uren", "61-app-uren-invullen");
+p = await pagina("u-yara");
+await foto(p, "/app/werk/uren/bevestigen", "62-app-uren-bevestigen");
+p = await pagina("u-erik", true);
+const iso = (d) => d.toLocaleDateString("sv-SE");
+const nu = new Date(); const vanaf = new Date(nu.getTime() - 21 * 864e5), totmet = nu;
+await foto(p, `/beheer/uren/uitdraai?van=${iso(vanaf)}&tot=${iso(totmet)}`, "63-uren-uitdraai");
+await foto(p, "/beheer/rechten?p=u-yara", "65-rechten-wie-mag-wat");
+await foto(p, "/beheer/personeel/nieuw", "70-medewerker-toevoegen");
+p = await pagina("u-joost", true);
+await foto(p, "/beheer/rechten", "64-rechten-rolmatrix");
+await foto(p, "/beheer/instellingen?tab=posities", "66-instellingen-posities");
+await foto(p, "/beheer/instellingen?tab=checklists", "67-instellingen-checklist", eerste('a[href*="tab=checklists&s="]'));
+await foto(p, "/beheer/instellingen?tab=waardering", "68-instellingen-waardering");
+await foto(p, "/beheer/instellingen?tab=organisatie", "69-instellingen-organisatie");
+await foto(p, "/beheer/handboek", "71-beheer-handboek", eerste('a[href*="/beheer/handboek?d=d"]'));
+await foto(p, "/beheer/leren", "72-beheer-leren", eerste('a[href*="/beheer/leren?i=l"]'));
 
 await browser.close();
