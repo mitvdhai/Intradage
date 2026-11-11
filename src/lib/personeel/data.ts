@@ -314,3 +314,27 @@ export async function teBevestigen(org: Org, u: Gebruiker) {
   if (!vest.length) return [];
   return (await klokVan({ vestigingIds: vest, status: "ingediend" })).filter((k) => k.gebruikerId !== u.id);
 }
+
+/**
+ * Bewaartermijn sollicitaties: 4 weken na afwijzing gaan kandidaat en het dossier in opbouw (incl. cv en beschikbaarheid) weg.
+ * Draait bij het openen van Werving; in productie ook dagelijks.
+ */
+export async function ruimSollicitatiesOp() {
+  const db = await getDb();
+  const grens = Date.now() - 28 * 864e5;
+  const afgewezen = await db.select().from(t.kandidaat).where(eq(t.kandidaat.fase, "afgewezen"));
+  for (const k of afgewezen) {
+    const laatste = Math.max(k.tijd.getTime(), ...k.notities.map((n) => new Date(n.tijd).getTime()));
+    if (laatste > grens) continue;
+    await db.delete(t.kandidaat).where(eq(t.kandidaat.id, k.id));
+    if (k.gebruikerId) await db.delete(t.gebruiker).where(and(eq(t.gebruiker.id, k.gebruikerId), eq(t.gebruiker.status, "kandidaat")));
+  }
+}
+
+/** Dossier in opbouw van een sollicitant: zichtbaar voor wie werving mag bekijken in de vestiging van de vacature. */
+export async function magKandidaatZien(org: Org, u: Gebruiker, gebruikerId: string) {
+  if (!mag(org, u, "werving", 1)) return false;
+  const db = await getDb();
+  const [r] = await db.select({ vestigingId: t.vacature.vestigingId }).from(t.kandidaat).innerJoin(t.vacature, eq(t.vacature.id, t.kandidaat.vacatureId)).where(eq(t.kandidaat.gebruikerId, gebruikerId));
+  return !!r && scopeVestigingen(org, u).includes(r.vestigingId);
+}

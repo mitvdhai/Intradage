@@ -182,7 +182,7 @@ export default async function Dossier({ params, searchParams }: PageProps<"/behe
               <summary className="cursor-pointer text-sm font-semibold text-navy-700">Document toevoegen</summary>
               <ActieForm actie={uploadDocument.bind(null, id)} knop="Uploaden" className="mt-3" reset>
                 <div className="grid gap-2 md:grid-cols-2">
-                  <select name="categorie" className={veld}><option value="certificaat">Certificaat (HACCP, BHV…)</option><option value="diploma">Diploma</option><option value="identiteit">Identiteitsbewijs</option><option value="loonheffing">Loonheffingsverklaring</option><option value="verklaring">Verklaring (VOG, ouders…)</option><option value="contract">Contract (extern)</option><option value="overig">Overig</option></select>
+                  <select name="categorie" className={veld}><option value="certificaat">Certificaat (HACCP, BHV…)</option><option value="diploma">Diploma</option><option value="cv">CV</option><option value="identiteit">Identiteitsbewijs</option><option value="loonheffing">Loonheffingsverklaring</option><option value="verklaring">Verklaring (VOG, ouders…)</option><option value="contract">Contract (extern)</option><option value="overig">Overig</option></select>
                   <input name="titel" placeholder="Titel" className={veld} />
                   <label className="text-[12px] text-muted">Geldig tot (optioneel)<input name="vervalt" type="date" className={veld} /></label>
                   <input name="bestand" type="file" accept="image/*,application/pdf" className="text-sm" />

@@ -101,7 +101,7 @@ export const gebruiker = pgTable("gebruiker", {
   actief: boolean("actief").notNull().default(true), // false = uit dienst (offboarding)
   overMij: text("over_mij"),
   // Personeelsbeheer (eigen bron, geen HorecaManager meer)
-  status: text("status").$type<"preboarding" | "actief" | "uit-dienst">().notNull().default("actief"),
+  status: text("status").$type<"kandidaat" | "preboarding" | "actief" | "uit-dienst">().notNull().default("actief"),
   geboortedatum: date("geboortedatum", { mode: "string" }),
   email: text("email"),
   persoonsgegevens: jsonb("persoonsgegevens").$type<Persoonsgegevens>().notNull().default({}),
@@ -572,7 +572,7 @@ export const dossierDocument = pgTable("dossier_document", {
   geuploadDoor: text("geupload_door").references(() => gebruiker.id),
   tijd: ts("tijd").notNull().defaultNow(),
 }, (t) => [index("dossier_gebruiker_idx").on(t.gebruikerId)]);
-export type DossierCategorie = "identiteit" | "contract" | "diploma" | "certificaat" | "loonheffing" | "verklaring" | "overig";
+export type DossierCategorie = "cv" | "identiteit" | "contract" | "diploma" | "certificaat" | "loonheffing" | "verklaring" | "overig";
 
 export const vacature = pgTable("vacature", {
   id: text("id").primaryKey(),

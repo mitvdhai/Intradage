@@ -5,7 +5,7 @@ import { ActieForm } from "@/components/actie-form";
 import { cx } from "@/components/ui";
 import { scopeVestigingen, mag } from "@/lib/access";
 import { bewerkKandidaat, neemAan, wijzigFase } from "@/lib/personeel/acties";
-import { kandidaat, vacatures } from "@/lib/personeel/data";
+import { beschikbaarheidVan, dossierVan, kandidaat, medewerker, vacatures } from "@/lib/personeel/data";
 import { leeftijdOp, regelsVoor } from "@/lib/planning/atw";
 import { vereisGebruiker } from "@/lib/session";
 import { Blok, Kop } from "../../beheer-ui";
@@ -22,6 +22,9 @@ export default async function KandidaatPagina({ params }: PageProps<"/beheer/wer
   const vac = (await vacatures(scopeVestigingen(org, u))).find((v) => v.id === k.vacatureId);
   if (!vac) notFound();
   const vandaag = new Date().toLocaleDateString("sv-SE");
+  const [persoon, besch, docs] = k.gebruikerId ? await Promise.all([medewerker(k.gebruikerId), beschikbaarheidVan([k.gebruikerId]), dossierVan(k.gebruikerId)]) : [null, [], []];
+  const pg = persoon?.persoonsgegevens ?? {};
+  const DAG = ["zo", "ma", "di", "wo", "do", "vr", "za"];
   const lft = leeftijdOp(k.geboortedatum, vandaag);
   const wie = (gid: string) => org.gebruikers.find((g) => g.id === gid)?.voornaam ?? "Iemand";
   const maandag = (() => { const d = new Date(); d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7) + 7); return d.toLocaleDateString("sv-SE"); })();
@@ -44,11 +47,13 @@ export default async function KandidaatPagina({ params }: PageProps<"/beheer/wer
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_1fr]">
         <div className="space-y-6">
-          <Blok titel="Sollicitatie">
+          <Blok titel="Sollicitatie" rechts={persoon ? <span className="rounded-full bg-navy-50 px-2.5 py-0.5 text-[12px] font-semibold text-navy-700">Dossier in opbouw</span> : undefined}>
             <dl className="grid grid-cols-[140px_1fr] gap-y-1.5 text-sm">
               <dt className="text-muted">Contact</dt><dd className="flex flex-wrap gap-4"><span className="inline-flex items-center gap-1"><Mail size={14} /> {k.email}</span><span className="inline-flex items-center gap-1"><Phone size={14} /> {k.mobiel}</span></dd>
               <dt className="text-muted">Leeftijd</dt><dd>{lft !== null ? `${lft} jaar` : "–"}{lft !== null && lft < 18 && <span className="ml-2 text-[12px] font-semibold text-amber-700">ATW {regelsVoor(lft).label}: max. {regelsVoor(lft).maxDienstMin / 60} uur per dienst{regelsVoor(lft).nietNa ? `, niet na ${regelsVoor(lft).nietNa! / 60}:00` : ""}</span>}</dd>
-              <dt className="text-muted">Beschikbaarheid</dt><dd>{k.beschikbaarheid ?? "–"}</dd>
+              <dt className="text-muted">Adres</dt><dd>{pg.adres ? `${pg.adres}, ${pg.postcode} ${pg.woonplaats}` : "–"}</dd>
+              <dt className="text-muted">Beschikbaarheid</dt><dd>{besch.length ? <div className="flex flex-wrap gap-1.5">{[1, 2, 3, 4, 5, 6, 0].map((d) => { const b = besch.find((x) => x.weekdag === d); return <span key={d} className={cx("rounded-md px-2 py-0.5 text-[12px]", b ? "bg-emerald-50 font-semibold text-emerald-800" : "bg-slate-100 text-slate-400")}>{DAG[d]}{b ? ` ${b.van}–${b.tot}` : ""}</span>; })}</div> : null}{k.beschikbaarheid && <div className="mt-1 text-[13px] text-muted">{k.beschikbaarheid}</div>}{!besch.length && !k.beschikbaarheid && "–"}</dd>
+              <dt className="text-muted">Documenten</dt><dd>{docs.length ? docs.map((d) => <a key={d.id} href={`/dossier/${d.id}`} target="_blank" className="mr-3 font-semibold text-navy-600 hover:underline">{d.titel} ({d.bestandsnaam})</a>) : "–"}</dd>
               <dt className="text-muted">Bron</dt><dd>{k.bron === "referral" ? `Aangedragen door ${wie(k.aangedragenDoor ?? "")}` : "Website"}</dd>
             </dl>
             {k.motivatie && <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm">“{k.motivatie}”</p>}
@@ -87,6 +92,7 @@ export default async function KandidaatPagina({ params }: PageProps<"/beheer/wer
                   <div><span className={label}>Duur</span><select name="maanden" defaultValue="12" className={veld}><option value="6">6 maanden</option><option value="12">12 maanden</option><option value="0">Onbepaalde tijd</option></select></div>
                 </div>
                 <ul className="list-disc space-y-0.5 pl-4 text-[12px] text-muted">
+                  <li>Het dossier van de sollicitatie wordt het personeelsdossier: naam, contact, adres, beschikbaarheid en cv staan er al in. Niets overtypen.</li>
                   <li>{k.voornaam} komt in het personeelsbestand met status <b>preboarding</b>.</li>
                   <li>Het contract wordt opgesteld vanuit het sjabloon en staat klaar om te tekenen.</li>
                   <li>{k.voornaam} krijgt een persoonlijke startlink: gegevens, ID, beschikbaarheid, contract tekenen.</li>

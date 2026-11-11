@@ -408,14 +408,14 @@ async function leesBestand(fd: FormData): Promise<{ fout?: string; b?: { naam: s
   const f = fd.get("bestand");
   if (!(f instanceof File) || !f.size) return {};
   if (f.size > MAX_BESTAND) return { fout: "Bestand is groter dan 2 MB." };
-  if (!/^(image\/(jpeg|png|webp|heic)|application\/pdf)$/.test(f.type)) return { fout: "Alleen een foto (jpg, png) of pdf." };
+  if (!/^(image\/(jpeg|png|webp|heic)|application\/(pdf|msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document))$/.test(f.type)) return { fout: "Alleen een foto (jpg, png), pdf of Word-bestand." };
   return { b: { naam: f.name.slice(0, 120), mime: f.type, kb: Math.ceil(f.size / 1024), inhoud: Buffer.from(await f.arrayBuffer()).toString("base64") } };
 }
 
 async function bewaarDocument(gebruikerId: string, door: string, fd: FormData): Promise<Res> {
   const categorie = tekst(fd, "categorie") as t.DossierCategorie;
   const titel = tekst(fd, "titel");
-  if (!["identiteit", "contract", "diploma", "certificaat", "loonheffing", "verklaring", "overig"].includes(categorie) || !titel) return { fout: "Kies een soort en geef een titel." };
+  if (!["cv", "identiteit", "contract", "diploma", "certificaat", "loonheffing", "verklaring", "overig"].includes(categorie) || !titel) return { fout: "Kies een soort en geef een titel." };
   const { fout, b } = await leesBestand(fd);
   if (fout) return { fout };
   if (!b) return { fout: "Kies een bestand." };
@@ -603,21 +603,42 @@ export async function sluitVacature(vacatureId: string) {
 }
 
 /** Openbaar sollicitatieformulier (geen login). */
+/**
+ * Openbare sollicitatie. Maakt meteen een dossier in opbouw (status "kandidaat"): naam, contact, geboortedatum,
+ * adres, beschikbaarheid per dag en cv staan daarna op de plek waar ze na aannemen ook nodig zijn. Niets overtypen.
+ */
 export async function solliciteer(slug: string, _: unknown, fd: FormData): Promise<Res> {
   const v = await vacatureOpSlug(slug);
   if (!v || v.status !== "open") return { fout: "Deze vacature is niet meer open." };
   const voornaam = tekst(fd, "voornaam"), achternaam = tekst(fd, "achternaam"), email = tekst(fd, "email"), mobiel = tekst(fd, "mobiel"), geb = tekst(fd, "geboortedatum");
   if (!voornaam || !achternaam || !/^\S+@\S+\.\S+$/.test(email) || mobiel.replace(/\D/g, "").length < 10) return { fout: "Vul je naam, een geldig e-mailadres en je mobiele nummer in." };
+  if (!isDatum(geb)) return { fout: "Vul je geboortedatum in." };
+  const adres = tekst(fd, "adres"), postcode = tekst(fd, "postcode").toUpperCase().replace(/\s+/g, " "), woonplaats = tekst(fd, "woonplaats");
+  if (!adres || !/^\d{4} ?[A-Z]{2}$/.test(postcode) || !woonplaats) return { fout: "Vul je adres in (straat en huisnummer, postcode en woonplaats)." };
+  if (![0, 1, 2, 3, 4, 5, 6].some((d) => fd.get(`dag-${d}`))) return { fout: "Kies minstens één dag waarop je kunt werken." };
   if (!fd.get("privacy")) return { fout: "Geef toestemming voor het verwerken van je gegevens." };
-  const leeftijd = leeftijdOp(isDatum(geb) ? geb : null, vandaagIso());
+  const leeftijd = leeftijdOp(geb, vandaagIso());
   if (leeftijd !== null && leeftijd < 15) return { fout: "Je moet minimaal 15 jaar zijn om bij ons te werken." };
+  const cv = await leesBestand(fd);
+  if (cv.fout) return { fout: `CV: ${cv.fout}` };
   const ref = tekst(fd, "ref");
   const db = await getDb();
   const [aandrager] = ref ? await db.select({ id: t.gebruiker.id }).from(t.gebruiker).where(eq(t.gebruiker.personeelsnummer, ref)) : [];
+  const vest = (await db.select().from(t.vestiging).where(eq(t.vestiging.id, v.vestigingId)))[0];
+  // Dossier in opbouw: nog geen account, geen vestiging-koppeling, onzichtbaar in rooster, chat en teamlijsten
+  const gebruikerId = id("u");
+  await db.insert(t.gebruiker).values({
+    id: gebruikerId, voornaam, achternaam, rol: "medewerker", functieId: v.functieId ?? "f-medewerker", franchisenemerId: vest?.franchisenemerId ?? null,
+    mobiel, email, geboortedatum: geb, inDienstSinds: vandaagIso(), personeelsnummer: `K${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 1e3)}`,
+    actief: false, status: "kandidaat", persoonsgegevens: { adres, postcode, woonplaats },
+  });
+  const b = await bewaarBeschikbaarheid(gebruikerId, fd);
+  if (b?.fout) { await db.delete(t.gebruiker).where(eq(t.gebruiker.id, gebruikerId)); return b; }
+  if (cv.b) await db.insert(t.dossierDocument).values({ id: id("dd"), gebruikerId, categorie: "cv", titel: "CV", bestandsnaam: cv.b.naam, mime: cv.b.mime, grootte: cv.b.kb, inhoud: cv.b.inhoud });
   await db.insert(t.kandidaat).values({
-    id: id("k"), vacatureId: v.id, voornaam, achternaam, email, mobiel, geboortedatum: isDatum(geb) ? geb : null,
-    motivatie: tekst(fd, "motivatie").slice(0, 2000) || null, beschikbaarheid: tekst(fd, "beschikbaarheid").slice(0, 500) || null,
-    bron: aandrager ? "referral" : "website", aangedragenDoor: aandrager?.id ?? null,
+    id: id("k"), vacatureId: v.id, voornaam, achternaam, email, mobiel, geboortedatum: geb,
+    motivatie: tekst(fd, "motivatie").slice(0, 2000) || null, beschikbaarheid: tekst(fd, "opmerking").slice(0, 500) || null,
+    bron: aandrager ? "referral" : "website", aangedragenDoor: aandrager?.id ?? null, gebruikerId,
   });
   return { ok: true };
 }
@@ -654,7 +675,7 @@ export async function bewerkKandidaat(kandidaatId: string, _: unknown, fd: FormD
 type NieuwPersoon = { voornaam: string; achternaam: string; mobiel: string; email: string | null; geboortedatum: string | null; vestigingId: string; functieId: string; rol: "medewerker" | "shiftleider" | "manager" };
 
 /** Kern van aannemen: account in preboarding, contract ter ondertekening, startlink en preboardingtaken. */
-async function legMedewerkerAan(p: NieuwPersoon, fd: FormData, u: { id: string }, org: Org): Promise<{ fout: string } | { gebruikerId: string; start: string }> {
+async function legMedewerkerAan(p: NieuwPersoon, fd: FormData, u: { id: string }, org: Org, bestaandId?: string | null): Promise<{ fout: string } | { gebruikerId: string; start: string }> {
   const db = await getDb();
   const start = tekst(fd, "start"), type = tekst(fd, "type") as "oproep" | "minmax" | "vast";
   const urenMin = type === "oproep" ? 0 : getal(fd, "urenMin"), urenMax = getal(fd, "urenMax"), uurloon = getal(fd, "uurloon");
@@ -662,13 +683,17 @@ async function legMedewerkerAan(p: NieuwPersoon, fd: FormData, u: { id: string }
   if (!isDatum(start) || !["oproep", "minmax", "vast"].includes(type) || !(urenMax > 0) || !(uurloon > 0)) return { fout: "Vul startdatum, contractsoort, uren en uurloon in." };
   const vest = org.vestigingen.find((x) => x.id === p.vestigingId);
   const fn = org.franchisenemers.find((f) => f.id === vest?.franchisenemerId);
-  const gebruikerId = id("u");
   const token = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
-  await db.insert(t.gebruiker).values({
-    id: gebruikerId, voornaam: p.voornaam, achternaam: p.achternaam, rol: p.rol, functieId: p.functieId,
+  const velden = {
+    voornaam: p.voornaam, achternaam: p.achternaam, rol: p.rol, functieId: p.functieId,
     franchisenemerId: fn?.id ?? null, mobiel: p.mobiel, email: p.email, geboortedatum: p.geboortedatum, inDienstSinds: start,
-    personeelsnummer: `P${Date.now().toString(36).toUpperCase()}`, actief: false, status: "preboarding", uitnodigingToken: token, agendaToken: crypto.randomUUID().slice(0, 16),
-  });
+    personeelsnummer: `P${Date.now().toString(36).toUpperCase()}`, actief: false, status: "preboarding" as const, uitnodigingToken: token, agendaToken: crypto.randomUUID().slice(0, 16),
+  };
+  // Kwam deze persoon via een sollicitatie binnen, dan bestaat het dossier al (adres, beschikbaarheid, cv): dat wordt het personeelsdossier.
+  const [bestaand] = bestaandId ? await db.select().from(t.gebruiker).where(eq(t.gebruiker.id, bestaandId)) : [];
+  const gebruikerId = bestaand?.status === "kandidaat" ? bestaand.id : id("u");
+  if (bestaand?.status === "kandidaat") await db.update(t.gebruiker).set(velden).where(eq(t.gebruiker.id, gebruikerId));
+  else await db.insert(t.gebruiker).values({ id: gebruikerId, ...velden });
   await db.insert(t.gebruikerVestiging).values({ gebruikerId, vestigingId: p.vestigingId });
   // Standaardposities, alleen waar de nieuwe medewerker oud genoeg voor is (bij de start)
   const startPos = (await db.select().from(t.positie)).filter((x) => ["pos-kassa", "pos-uitgifte"].includes(x.id) && !teJongVoor(p.geboortedatum, start, x.minLeeftijd));
@@ -681,6 +706,8 @@ async function legMedewerkerAan(p: NieuwPersoon, fd: FormData, u: { id: string }
   await db.insert(t.contract).values({ id: id("ct"), gebruikerId, volgnummer: 1, type, urenMin: uMin, urenMax, uurloon, functieId: p.functieId, start, eind, proeftijdTot, tekst: tekstC, status: "ter-ondertekening", documentHash: hash(tekstC), aangemaaktDoor: u.id });
   await db.insert(t.salaris).values({ gebruikerId, uurloon, schaalMin: uurloon, schaalMax: Math.round(uurloon * 1.15 * 100) / 100 });
   await maakLifecycle(gebruikerId, "preboarding", start);
+  // Wat bij de sollicitatie al is ingevuld, hoeft in de preboarding niet opnieuw
+  if ((await db.select().from(t.beschikbaarheid).where(eq(t.beschikbaarheid.gebruikerId, gebruikerId))).length) await vinkAf(gebruikerId, "beschikbaarheid", gebruikerId);
   return { gebruikerId, start };
 }
 
@@ -690,7 +717,7 @@ export async function neemAan(kandidaatId: string, _: unknown, fd: FormData): Pr
   const db = await getDb();
   const [v] = await db.select().from(t.vacature).where(eq(t.vacature.id, k.vacatureId));
   const { u, org } = await inScope(v.vestigingId, "werving");
-  const r = await legMedewerkerAan({ voornaam: k.voornaam, achternaam: k.achternaam, mobiel: k.mobiel, email: k.email, geboortedatum: k.geboortedatum, vestigingId: v.vestigingId, functieId: v.functieId ?? "f-medewerker", rol: v.functieId === "f-shiftleider" ? "shiftleider" : "medewerker" }, fd, u, org);
+  const r = await legMedewerkerAan({ voornaam: k.voornaam, achternaam: k.achternaam, mobiel: k.mobiel, email: k.email, geboortedatum: k.geboortedatum, vestigingId: v.vestigingId, functieId: v.functieId ?? "f-medewerker", rol: v.functieId === "f-shiftleider" ? "shiftleider" : "medewerker" }, fd, u, org, k.gebruikerId);
   if ("fout" in r) return r;
   await db.update(t.kandidaat).set({ fase: "aangenomen", gebruikerId: r.gebruikerId, notities: [...k.notities, { door: u.id, tijd: new Date().toISOString(), tekst: `Aangenomen per ${r.start}` }] }).where(eq(t.kandidaat.id, kandidaatId));
   if (k.aangedragenDoor) await db.insert(t.waardering).values({ id: id("wd"), vanId: u.id, aanId: k.aangedragenDoor, waardeId: "w-samen", tekst: `Bedankt voor het aandragen van ${k.voornaam}, die bij ons komt werken!`, punten: 50 }).onConflictDoNothing();

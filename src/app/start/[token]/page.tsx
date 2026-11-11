@@ -46,8 +46,9 @@ export default async function Start({ params }: PageProps<"/start/[token]">) {
         {allesKlaar && <div className="rounded-2xl bg-emerald-50 p-4 text-emerald-900"><b>Top, je bent klaar!</b> Je leidinggevende tekent je contract en plant je eerste dienst. Daarna krijg je een sms om in te loggen in de app.</div>}
         <Stap nr={1} {...stap("gegevens")} titel="Je gegevens">
           <ActieForm actie={preboardingGegevens.bind(null, token)} knop="Opslaan" variant="rood">
-            <input name="adres" placeholder="Straat en huisnummer" className={veld} />
-            <div className="grid grid-cols-[120px_1fr] gap-2"><input name="postcode" placeholder="Postcode" className={veld} /><input name="woonplaats" placeholder="Woonplaats" className={veld} /></div>
+            {g.persoonsgegevens.adres && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-[13px] text-emerald-900">Je adres hebben we al uit je sollicitatie. Vul alleen nog aan wat ontbreekt.</p>}
+            <input name="adres" defaultValue={g.persoonsgegevens.adres} placeholder="Straat en huisnummer" className={veld} />
+            <div className="grid grid-cols-[120px_1fr] gap-2"><input name="postcode" defaultValue={g.persoonsgegevens.postcode} placeholder="Postcode" className={veld} /><input name="woonplaats" defaultValue={g.persoonsgegevens.woonplaats} placeholder="Woonplaats" className={veld} /></div>
             <input name="iban" placeholder="IBAN (voor je salaris)" className={veld} />
             <input name="bsn" inputMode="numeric" placeholder="BSN (staat op je ID-kaart)" className={veld} />
             <fieldset className="rounded-xl bg-slate-50 p-3 text-[14px]"><legend className="px-1 text-[13px] text-muted">Loonheffingskorting toepassen bij ons?</legend>

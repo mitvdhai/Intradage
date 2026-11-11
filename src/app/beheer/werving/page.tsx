@@ -5,7 +5,7 @@ import { ActieForm } from "@/components/actie-form";
 import { cx } from "@/components/ui";
 import { mag, scopeVestigingen } from "@/lib/access";
 import { maakVacature, sluitVacature } from "@/lib/personeel/acties";
-import { kandidaten, vacatures } from "@/lib/personeel/data";
+import { kandidaten, vacatures, ruimSollicitatiesOp } from "@/lib/personeel/data";
 import { leeftijdOp } from "@/lib/planning/atw";
 import { vereisGebruiker } from "@/lib/session";
 import { Blok, Kop, Kpi } from "../beheer-ui";
@@ -21,6 +21,7 @@ export default async function Werving() {
   if (!mag(org, u, "werving", 1)) redirect("/beheer");
   const scope = scopeVestigingen(org, u);
   const kan = mag(org, u, "werving");
+  await ruimSollicitatiesOp();
   const vac = await vacatures(scope);
   const kand = await kandidaten(vac.map((v) => v.id));
   const vandaag = new Date().toLocaleDateString("sv-SE");

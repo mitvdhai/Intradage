@@ -240,11 +240,17 @@ await klikTekst(p, "Contract tekenen");
 await p.waitForFunction(() => document.body.innerText.includes("Getekend door beide partijen"), { timeout: 8000 });
 ok(true, "werkgever tekent; contract is rond");
 
-// 19. Solliciteren via de openbare vacaturepagina
+// 19. Solliciteren via de openbare vacaturepagina: dit wordt meteen een dossier in opbouw
 p = await als("");
 await p.goto(`${BASE}/werken-bij/medewerker-centrum-rotterdam`, { waitUntil: "networkidle0" });
 await p.type('input[name="voornaam"]', "Eetje"); await p.type('input[name="achternaam"]', "E2E");
+await p.evaluate(() => { document.querySelector('input[name="geboortedatum"]').value = "2004-05-05"; });
 await p.type('input[name="email"]', "e2e@voorbeeld.nl"); await p.type('input[name="mobiel"]', "0612345678");
+await p.type('input[name="adres"]', "Coolsingel 40"); await p.type('input[name="postcode"]', "3011 AD"); await p.type('input[name="woonplaats"]', "Rotterdam");
+await p.click('input[name="dag-3"]'); await p.click('input[name="dag-6"]');
+const cvPad = "/tmp/e2e-cv.pdf";
+(await import("node:fs")).writeFileSync(cvPad, "%PDF-1.4\n% e2e cv\n");
+await (await p.$('input[name="bestand"]')).uploadFile(cvPad);
 await p.click('input[name="privacy"]');
 await klikTekst(p, "Verstuur sollicitatie");
 await p.waitForFunction(() => document.body.innerText.includes("Bedankt voor je sollicitatie"), { timeout: 8000 });
@@ -252,19 +258,25 @@ p = await als("u-erik");
 await p.setViewport({ width: 1400, height: 900 });
 await p.goto(`${BASE}/beheer/werving`, { waitUntil: "networkidle0" });
 ok((await tekst(p)).includes("Eetje E2E"), "sollicitatie verschijnt in de werving");
+const kLink = await p.evaluate(() => [...document.querySelectorAll('a[href^="/beheer/werving/k"]')].find((a) => a.innerText.includes("Eetje"))?.getAttribute("href"));
+await p.goto(`${BASE}${kLink}`, { waitUntil: "networkidle0" });
+const kt = await tekst(p);
+ok(kt.includes("Dossier in opbouw") && kt.includes("Coolsingel 40") && /wo 13:00|wo 11:00/.test(kt) && kt.includes("e2e-cv.pdf"), "sollicitatie is meteen een dossier: adres, beschikbaarheid en cv");
 
-// 20. Aannemen → preboarding via startlink
-await p.goto(`${BASE}/beheer/werving/k-3`, { waitUntil: "networkidle0" });
+// 20. Aannemen → hetzelfde dossier gaat de preboarding in; niets overtypen
 await klikTekst(p, "Aannemen en preboarding starten");
 await p.waitForFunction(() => location.search.includes("nieuw=1"), { timeout: 10000 });
 const startLink = await p.$eval('a[href^="/start/"]', (a) => a.getAttribute("href"));
-ok(!!startLink && (await tekst(p)).includes("preboarding"), "kandidaat aangenomen, dossier en startlink aangemaakt");
+const dt = await tekst(p);
+ok(!!startLink && /preboarding/i.test(dt) && /Documenten\s*\n\s*CV/.test(dt) && dt.includes("Coolsingel 40") && (await p.$eval('input[name="dag-3"]', (i) => i.checked)), "kandidaat aangenomen; adres, beschikbaarheid en cv staan in het personeelsdossier");
+await p.goto(`${BASE}/beheer/personeel?filter=preboarding`, { waitUntil: "networkidle0" });
+ok((await p.$$eval('table a[href^="/beheer/personeel/u"]', (as) => as.filter((a) => a.innerText.includes("Eetje")).length)) === 1, "geen dubbel dossier na aannemen");
 p = await als("");
 await p.goto(`${BASE}${startLink}`, { waitUntil: "networkidle0" });
-await p.type('input[name="adres"]', "Coolsingel 40"); await p.type('input[name="postcode"]', "3011AD"); await p.type('input[name="woonplaats"]', "Rotterdam");
+ok(await p.$eval('input[name="adres"]', (i) => i.value) === "Coolsingel 40" && /1 van 4 stappen klaar/.test(await tekst(p)) && /Wanneer kun je werken\?\s*\n\s*klaar/i.test(await tekst(p)), "startlink: adres staat er al, beschikbaarheid is al klaar");
 await p.type('input[name="iban"]', "NL91ABNA0417164300"); await p.type('input[name="bsn"]', "111222333");
 await klikTekst(p, "Opslaan");
-await p.waitForFunction(() => /1 van 4 stappen klaar/.test(document.body.innerText), { timeout: 8000 });
+await p.waitForFunction(() => /2 van 4 stappen klaar/.test(document.body.innerText), { timeout: 8000 });
 ok(true, "nieuwe medewerker vult gegevens in via de startlink (IBAN- en BSN-controle)");
 
 // 21. Uren goedkeuren en exporteren

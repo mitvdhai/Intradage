@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import * as t from "@/lib/db/schema";
-import { magDossier, medewerker } from "@/lib/personeel/data";
+import { magDossier, magKandidaatZien, medewerker } from "@/lib/personeel/data";
 import { huidigeGebruiker } from "@/lib/session";
 
 /** Een document uit het personeelsdossier downloaden: alleen de medewerker zelf of de leiding/HQ met rechten. */
@@ -13,7 +13,9 @@ export async function GET(_: Request, ctx: RouteContext<"/dossier/[id]">) {
   const [d] = await db.select().from(t.dossierDocument).where(eq(t.dossierDocument.id, id));
   if (!d?.inhoud) return new Response("Niet gevonden", { status: 404 });
   const m = await medewerker(d.gebruikerId);
-  if (!m || (s.u.id !== d.gebruikerId && !magDossier(s.org, s.u, m))) return new Response("Geen toegang", { status: 403 });
+  if (!m) return new Response("Niet gevonden", { status: 404 });
+  const toegang = m.status === "kandidaat" ? await magKandidaatZien(s.org, s.u, m.id) : s.u.id === d.gebruikerId || magDossier(s.org, s.u, m);
+  if (!toegang) return new Response("Geen toegang", { status: 403 });
   const { audit } = await import("@/lib/audit");
   await audit(s.u.id, "Dossierdocument bekeken", `${d.gebruikerId} · ${d.titel}`);
   return new Response(Buffer.from(d.inhoud, "base64"), {
