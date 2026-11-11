@@ -148,6 +148,7 @@ await foto(p, "/app/werk/contract/ct-sanne-2", "56-app-contract", async (q) => {
 await foto(p, "/app/werk/documenten", "57-app-documenten");
 p = await pagina(null);
 await foto(p, "/werken-bij/medewerker-centrum-rotterdam", "58-werken-bij");
+await foto(p, "/werken-bij/medewerker-centrum-rotterdam", "73-sollicitatie-formulier", async (pg) => { await pg.evaluate(() => { const h = [...document.querySelectorAll("div")].find((d) => d.innerText === "WANNEER KUN JE WERKEN?" || d.innerText === "Wanneer kun je werken?"); (h ?? document.querySelector("form")).scrollIntoView(); window.scrollBy(0, -260); }); });
 await foto(p, "/start/welkom-lotte", "59-preboarding");
 p = await pagina("u-noor");
 await foto(p, "/app/team", "60-app-team");

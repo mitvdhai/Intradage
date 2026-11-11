@@ -8,13 +8,13 @@ export function BeschikbaarheidVelden({ huidig }: { huidig: { weekdag: number; v
       {DAGEN.map((d) => {
         const b = huidig.find((x) => x.weekdag === d);
         return (
-          <div key={d} className="flex items-center gap-2 px-3.5 py-2.5">
-            <label className="flex flex-1 items-center gap-2.5 text-[15px] font-medium has-[:checked]:text-ink">
-              <input type="checkbox" name={`dag-${d}`} defaultChecked={!!b} className="h-5 w-5 accent-navy-700" /> {NAAM[d]}
+          <div key={d} className="flex items-center gap-1.5 px-3 py-2.5">
+            <label className="flex min-w-0 flex-1 items-center gap-2 text-[15px] font-medium has-[:checked]:text-ink">
+              <input type="checkbox" name={`dag-${d}`} defaultChecked={!!b} className="h-5 w-5 shrink-0 accent-navy-700" /> <span className="truncate">{NAAM[d]}</span>
             </label>
-            <input name={`van-${d}`} type="time" defaultValue={b?.van ?? "11:00"} className="rounded-lg border border-line px-2 py-1.5 text-[14px] tabular-nums" />
+            <input name={`van-${d}`} type="time" defaultValue={b?.van ?? "11:00"} className="w-[4.4rem] shrink-0 rounded-lg border border-line px-1.5 py-1.5 text-center [&::-webkit-calendar-picker-indicator]:hidden text-[14px] tabular-nums" />
             <span className="text-muted">–</span>
-            <input name={`tot-${d}`} type="time" defaultValue={b?.tot ?? "22:00"} className="rounded-lg border border-line px-2 py-1.5 text-[14px] tabular-nums" />
+            <input name={`tot-${d}`} type="time" defaultValue={b?.tot ?? "22:00"} className="w-[4.4rem] shrink-0 rounded-lg border border-line px-1.5 py-1.5 text-center [&::-webkit-calendar-picker-indicator]:hidden text-[14px] tabular-nums" />
           </div>
         );
       })}
